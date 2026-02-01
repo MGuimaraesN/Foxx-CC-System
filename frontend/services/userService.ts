@@ -51,12 +51,34 @@ export const updateUserProfile = (profile: UserProfile, newPassword?: string) =>
     console.warn("Update profile not implemented in backend yet");
 };
 
-// Data Backup & Restore (Deprecated/Disabled for now as we moved to DB)
-export const generateBackup = () => {
-  console.warn("Backup not supported in DB mode yet");
+// Data Backup & Restore
+export const generateBackup = async () => {
+  try {
+    const response = await api.get('/api/data/export');
+    const data = response.data;
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `foxx-cc-backup-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error("Backup generation failed", error);
+  }
 };
 
-export const restoreBackup = (jsonContent: string): boolean => {
-  console.warn("Restore not supported in DB mode yet");
-  return false;
+export const restoreBackup = async (jsonContent: string): Promise<boolean> => {
+  try {
+    const data = JSON.parse(jsonContent);
+    await api.post('/api/data/import', data);
+    return true;
+  } catch (error) {
+    console.error("Backup restore failed", error);
+    return false;
+  }
 };

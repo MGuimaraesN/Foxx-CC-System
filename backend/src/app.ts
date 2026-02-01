@@ -7,6 +7,7 @@ import cardRoutes from './routes/cardRoutes';
 import budgetRoutes from './routes/budgetRoutes';
 import dashboardRoutes from './routes/dashboardRoutes';
 import newsRoutes from './routes/newsRoutes';
+import dataRoutes from './routes/dataRoutes';
 
 const app = express();
 
@@ -24,5 +25,6 @@ app.use('/cards', cardRoutes);
 app.use('/budgets', budgetRoutes);
 app.use('/dashboard', dashboardRoutes);
 app.use('/api/news', newsRoutes);
+app.use('/api/data', dataRoutes);
 
 export default app;

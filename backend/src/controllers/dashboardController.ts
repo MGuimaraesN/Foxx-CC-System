@@ -13,6 +13,13 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
     const startOfMonth = new Date(currentYear, currentMonth, 1);
     const endOfMonth = new Date(currentYear, currentMonth + 1, 0);
 
+    // Calculate Total Limit (Sum of all cards)
+    const totalLimitAgg = await prisma.card.aggregate({
+        _sum: { limit: true },
+        where: { userId }
+    });
+    const totalLimit = totalLimitAgg._sum.limit || 0;
+
     // Open Invoice (All Pending Expenses)
     const openInvoiceAgg = await prisma.transaction.aggregate({
         _sum: { amount: true },
@@ -149,7 +156,7 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
     res.json({
         openInvoice,
         closedInvoice,
-        totalLimit: 65000, // Hardcoded in original, ideally sum of card limits
+        totalLimit,
         usedLimit: openInvoice + closedInvoice,
         upcomingMaturities,
         monthlyTrend,
