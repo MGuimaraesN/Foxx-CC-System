@@ -39,7 +39,7 @@ const App: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [currentView, setCurrentView] = useState<ViewState>('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [userProfile, setUserProfile] = useState(getUserProfile());
+  const [userProfile, setUserProfile] = useState({ name: '', email: '', avatarUrl: '' });
 
   // Check Auth on Mount & Fix F5 Refresh Logic
   useEffect(() => {
@@ -53,10 +53,10 @@ const App: React.FC = () => {
 
   // Update Profile when view changes (simple sync)
   useEffect(() => {
-    if(currentView === 'dashboard' || currentView === 'user') {
-        setUserProfile(getUserProfile());
+    if (isAuth) {
+        getUserProfile().then(setUserProfile);
     }
-  }, [currentView]);
+  }, [isAuth]);
 
   // Data State via React Query Hooks (only enabled if auth)
   const deleteMutation = useDeleteTransaction({
@@ -80,7 +80,7 @@ const App: React.FC = () => {
   // Global Error Handler for Query
   useEffect(() => {
     if (isError && error && isAuth) {
-      toast.error(error.message || 'Failed to fetch data');
+      // toast.error(error.message || 'Failed to fetch data'); // Optional: quiet fail or explicit
     }
   }, [isError, error, isAuth]);
 
@@ -193,7 +193,7 @@ const App: React.FC = () => {
   // Login View Wrapper
   if (!isAuth) {
     return (
-        <div className="text-slate-900 dark:text-slate-100 dark:bg-slate-950 transition-colors duration-200">
+        <div className="text-slate-900 dark:text-slate-100 dark:bg-slate-950 transition-colors duration-200 h-screen w-screen">
              <LoginView onLoginSuccess={() => setIsAuth(true)} />
              <div className="absolute top-4 right-4 z-50">
                <button 
@@ -269,11 +269,11 @@ const App: React.FC = () => {
              {userProfile.avatarUrl ? (
                 <img src={userProfile.avatarUrl} className="w-full h-full object-cover" alt="Avatar" />
              ) : (
-                <span className="text-indigo-600 dark:text-indigo-400 font-bold">{userProfile.name.charAt(0)}</span>
+                <span className="text-indigo-600 dark:text-indigo-400 font-bold">{userProfile.name?.charAt(0) || 'U'}</span>
              )}
            </div>
            <div className="flex-1 min-w-0">
-             <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{userProfile.name}</p>
+             <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{userProfile.name || 'User'}</p>
              <p className="text-xs text-slate-500 truncate">{userProfile.email}</p>
            </div>
            <button onClick={(e) => { e.stopPropagation(); handleLogout(); }} className="text-slate-400 hover:text-red-500 transition-colors">
