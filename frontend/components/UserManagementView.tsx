@@ -8,7 +8,10 @@ export const UserManagementView: React.FC = () => {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    setProfile(getUserProfile());
+    getUserProfile().then(p => {
+        // Mask fields initially
+        setProfile({ ...p, email: '', name: p.name || '' });
+    });
   }, []);
 
   const handleSave = (e: React.FormEvent) => {
@@ -56,6 +59,7 @@ export const UserManagementView: React.FC = () => {
                <input 
                  type="email" 
                  value={profile.email}
+                 placeholder="Enter new email to change"
                  onChange={e => setProfile({...profile, email: e.target.value})}
                  className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:text-white"
                />

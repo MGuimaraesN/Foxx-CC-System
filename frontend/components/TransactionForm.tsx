@@ -237,12 +237,24 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSuc
           {/* Category & Tags */}
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Category</label>
-            <input 
-              type="text" 
-              {...register('category')}
-              className={`w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none dark:text-white ${errors.category ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'}`}
-              placeholder="e.g. Food, Transport"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                {...register('category')}
+                list="budget-categories"
+                className={`w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none dark:text-white ${errors.category ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'}`}
+                placeholder="Select or type new category"
+              />
+              <datalist id="budget-categories">
+                 <option value="Food" />
+                 <option value="Transport" />
+                 <option value="Housing" />
+                 <option value="Services" />
+                 <option value="Health" />
+                 <option value="Education" />
+                 <option value="Entertainment" />
+              </datalist>
+            </div>
              {errors.category && <span className="text-red-500 text-xs mt-1 block">{errors.category.message}</span>}
           </div>
 

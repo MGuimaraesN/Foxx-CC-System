@@ -112,8 +112,15 @@ export const refresh = async (req: Request, res: Response) => {
         if (!user) return res.status(403).json({ error: 'Invalid refresh token' });
 
         const token = generateToken({ id: user.id, email: user.email });
-        // Optionally rotate refresh token here
-        res.json({ token });
+
+        // Refresh Token Rotation
+        const newRefreshToken = uuidv4();
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { refreshToken: newRefreshToken }
+        });
+
+        res.json({ token, refreshToken: newRefreshToken });
     } catch (error) {
         res.status(500).json({ error: 'Failed to refresh token' });
     }

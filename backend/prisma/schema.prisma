@@ -15,7 +15,7 @@ model User {
   avatarUrl    String?
   createdAt    DateTime @default(now())
 
-  currency     String   @default("BRL")
+  currency     String   @default("BRL") // Will be migrated to Enum manually or kept as string for compatibility if SQLite doesn't support Enums well in Prisma
   language     String   @default("pt-BR")
   whatsappPhone String? @unique
   refreshToken String?

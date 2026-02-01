@@ -156,6 +156,7 @@ export const createTransaction = async (req: AuthRequest, res: Response) => {
 export const deleteTransaction = async (req: AuthRequest, res: Response) => {
     if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
     const { id } = req.params as { id: string };
+    const cascade = req.query.cascade === 'true';
 
     try {
         const tx = await prisma.transaction.findUnique({ where: { id } });
@@ -163,7 +164,21 @@ export const deleteTransaction = async (req: AuthRequest, res: Response) => {
             return res.status(404).json({ error: 'Transaction not found' });
         }
 
-        // Soft delete
+        if (cascade && tx.isInstallment && tx.installmentId) {
+            // Cascade delete future installments
+            await prisma.transaction.updateMany({
+                where: {
+                    installmentId: tx.installmentId,
+                    userId: req.user.id,
+                    date: { gte: tx.date },
+                    deletedAt: null
+                },
+                data: { deletedAt: new Date() }
+            });
+            return res.json({ message: 'Deleted series' });
+        }
+
+        // Soft delete single
         await prisma.transaction.update({
             where: { id },
             data: { deletedAt: new Date() }
@@ -177,6 +192,7 @@ export const deleteTransaction = async (req: AuthRequest, res: Response) => {
 export const updateTransaction = async (req: AuthRequest, res: Response) => {
     if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
     const { id } = req.params as { id: string };
+    const cascade = req.query.cascade === 'true';
 
     try {
         const tx = await prisma.transaction.findUnique({ where: { id } });
@@ -194,6 +210,27 @@ export const updateTransaction = async (req: AuthRequest, res: Response) => {
         delete updateData.id;
         delete updateData.userId;
         delete updateData.createdAt;
+
+        if (cascade && tx.isInstallment && tx.installmentId) {
+            // Update future installments, but preserve specific fields like date and amount unless explicitly forced?
+            // For now, we update category, description base (keeping number?), tags.
+            // Complex logic: Update only shared fields.
+            const { description, category, tags, type } = updateData;
+            const sharedUpdate: any = {};
+            if (category) sharedUpdate.category = category;
+            if (tags) sharedUpdate.tags = tags;
+            if (type) sharedUpdate.type = type;
+
+            await prisma.transaction.updateMany({
+                where: {
+                    installmentId: tx.installmentId,
+                    userId: req.user.id,
+                    date: { gte: tx.date },
+                    deletedAt: null
+                },
+                data: sharedUpdate
+            });
+        }
 
         const updated = await prisma.transaction.update({
             where: { id },

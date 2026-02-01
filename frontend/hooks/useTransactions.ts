@@ -20,12 +20,23 @@ export const useCreateTransaction = (options?: MutationOptions) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createTransaction,
+    onMutate: async (newTx: any) => {
+        await queryClient.cancelQueries({ queryKey: ['transactions'] });
+        const previous = queryClient.getQueryData(['transactions']);
+        queryClient.setQueryData(['transactions'], (old: any) => {
+            return old ? [ { ...newTx, id: 'temp-' + Date.now(), status: newTx.status || 'PENDING' }, ...old ] : [];
+        });
+        return { previous };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       if (options?.onSuccess) options.onSuccess();
     },
-    onError: (error) => {
+    onError: (error, newTx, context: any) => {
+      if (context?.previous) {
+          queryClient.setQueryData(['transactions'], context.previous);
+      }
       if (options?.onError) options.onError(error);
     }
   });
@@ -35,12 +46,21 @@ export const useUpdateTransaction = (options?: MutationOptions) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: updateTransaction,
+    onMutate: async (updatedTx: any) => {
+        await queryClient.cancelQueries({ queryKey: ['transactions'] });
+        const previous = queryClient.getQueryData(['transactions']);
+        queryClient.setQueryData(['transactions'], (old: any) => {
+             return old ? old.map((t: any) => t.id === updatedTx.id ? { ...t, ...updatedTx } : t) : [];
+        });
+        return { previous };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       if (options?.onSuccess) options.onSuccess();
     },
-    onError: (error) => {
+    onError: (error, vars, context: any) => {
+      if (context?.previous) queryClient.setQueryData(['transactions'], context.previous);
       if (options?.onError) options.onError(error);
     }
   });
@@ -50,12 +70,21 @@ export const useDeleteTransaction = (options?: MutationOptions) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: deleteTransaction,
+    onMutate: async (id: string) => {
+        await queryClient.cancelQueries({ queryKey: ['transactions'] });
+        const previous = queryClient.getQueryData(['transactions']);
+        queryClient.setQueryData(['transactions'], (old: any) => {
+            return old ? old.filter((t: any) => t.id !== id) : [];
+        });
+        return { previous };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       if (options?.onSuccess) options.onSuccess();
     },
-    onError: (error) => {
+    onError: (error, id, context: any) => {
+      if (context?.previous) queryClient.setQueryData(['transactions'], context.previous);
       if (options?.onError) options.onError(error);
     }
   });

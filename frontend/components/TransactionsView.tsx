@@ -23,6 +23,7 @@ interface TransactionsViewProps {
 export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions, loading, cards, onDelete, isDeleting, error, showToast, currency = 'BRL', isPrivate = false }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<'ALL' | TransactionType>('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | TransactionStatus>('ALL');
   const [cardFilter, setCardFilter] = useState<string>('ALL');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -75,6 +76,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
     
     // Dropdown Filters
     const matchesType = typeFilter === 'ALL' || t.type === typeFilter;
+    const matchesStatus = statusFilter === 'ALL' || t.status === statusFilter;
     const matchesCard = cardFilter === 'ALL' || t.cardId === cardFilter;
     
     // Category specific input
@@ -97,7 +99,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
       matchesTags = t.tags?.some(tag => selectedTags.includes(tag)) || false;
     }
 
-    return matchesSearch && matchesType && matchesCard && matchesCategory && matchesDate && matchesTags;
+    return matchesSearch && matchesType && matchesStatus && matchesCard && matchesCategory && matchesDate && matchesTags;
   });
 
   // Calculate Summary based on filtered transactions
@@ -244,6 +246,16 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
                <option value="ALL">All Types</option>
                <option value="EXPENSE">Expenses</option>
                <option value="INCOME">Income</option>
+            </select>
+
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as any)}
+              className="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg border-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium cursor-pointer"
+            >
+               <option value="ALL">All Status</option>
+               <option value="PAID">Paid</option>
+               <option value="PENDING">Pending</option>
             </select>
 
             <select 
