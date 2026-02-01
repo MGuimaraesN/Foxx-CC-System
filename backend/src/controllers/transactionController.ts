@@ -211,7 +211,50 @@ export const updateTransaction = async (req: AuthRequest, res: Response) => {
         delete updateData.userId;
         delete updateData.createdAt;
 
-        if (cascade && tx.isInstallment && tx.installmentId) {
+        // Installment Conversion Logic (Single -> Multi)
+        if (!tx.isInstallment && updateData.isInstallment && updateData.totalInstallments && updateData.totalInstallments > 1) {
+             const groupId = uuidv4();
+             const totalInstallments = updateData.totalInstallments;
+             const baseAmount = updateData.amount || tx.amount;
+             const baseDate = updateData.date ? new Date(updateData.date) : tx.date;
+
+             // Calculate splits
+             const partAmount = Number((baseAmount / totalInstallments).toFixed(2));
+             const totalCalculated = partAmount * totalInstallments;
+             const remainder = Number((baseAmount - totalCalculated).toFixed(2));
+
+             // Update the CURRENT transaction to be the first installment
+             updateData.installmentId = groupId;
+             updateData.installmentNumber = 1;
+             updateData.totalInstallments = totalInstallments;
+             updateData.amount = partAmount + remainder;
+             updateData.description = `${updateData.description || tx.description} (1/${totalInstallments})`;
+
+             // Create FUTURE installments
+             const installments = [];
+             for (let i = 1; i < totalInstallments; i++) {
+                 const nextDate = new Date(baseDate);
+                 nextDate.setMonth(baseDate.getMonth() + i);
+
+                 installments.push({
+                     userId: req.user.id,
+                     description: `${updateData.description || tx.description} (${i + 1}/${totalInstallments})`,
+                     amount: partAmount,
+                     date: nextDate,
+                     type: updateData.type || tx.type,
+                     status: 'PENDING',
+                     category: updateData.category || tx.category,
+                     tags: updateData.tags || tx.tags,
+                     cardId: updateData.cardId || tx.cardId,
+                     isInstallment: true,
+                     installmentId: groupId,
+                     installmentNumber: i + 1,
+                     totalInstallments: totalInstallments
+                 });
+             }
+             await prisma.transaction.createMany({ data: installments });
+        }
+        else if (cascade && tx.isInstallment && tx.installmentId) {
             // Update future installments, but preserve specific fields like date and amount unless explicitly forced?
             // For now, we update category, description base (keeping number?), tags.
             // Complex logic: Update only shared fields.
@@ -346,5 +389,51 @@ export const createBulkTransactions = async (req: AuthRequest, res: Response) =>
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Failed to bulk create' });
+    }
+};
+
+export const bulkUpdateStatus = async (req: AuthRequest, res: Response) => {
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+    const { ids, status } = req.body;
+
+    if (!Array.isArray(ids) || !['PAID', 'PENDING'].includes(status)) {
+        return res.status(400).json({ error: 'Invalid request' });
+    }
+
+    try {
+        await prisma.transaction.updateMany({
+            where: {
+                id: { in: ids },
+                userId: req.user.id,
+                deletedAt: null
+            },
+            data: { status }
+        });
+        res.json({ message: 'Updated' });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to update' });
+    }
+};
+
+export const bulkDeleteTransactions = async (req: AuthRequest, res: Response) => {
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+    const { ids } = req.body;
+
+    if (!Array.isArray(ids)) {
+        return res.status(400).json({ error: 'Invalid request' });
+    }
+
+    try {
+        await prisma.transaction.updateMany({
+            where: {
+                id: { in: ids },
+                userId: req.user.id,
+                deletedAt: null
+            },
+            data: { deletedAt: new Date() }
+        });
+        res.json({ message: 'Deleted' });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to delete' });
     }
 };

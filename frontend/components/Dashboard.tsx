@@ -189,16 +189,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
             )}
         </div>
 
-        {/* Forecast Widget */}
-        {/* Category Sunburst (Simulated via Pie) */}
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col relative min-h-[400px]">
+        {/* Expense Breakdown (Donut Chart) */}
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col relative min-h-[300px]">
              <div className="flex items-center gap-3 mb-6">
-                <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg text-purple-600 dark:text-purple-400">
+                <div className="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg text-indigo-600 dark:text-indigo-400">
                     <PieChartIcon size={24} />
                 </div>
                 <div>
                     <h3 className="text-lg font-bold text-slate-900 dark:text-white">Expense Breakdown</h3>
-                    <p className="text-xs text-slate-500">Categories & Tags</p>
+                    <p className="text-xs text-slate-500">By Category</p>
                 </div>
             </div>
             <div className="flex-1 w-full relative">
@@ -211,31 +210,42 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
                             cx="50%"
                             cy="50%"
                             innerRadius={60}
-                            outerRadius={80}
-                            fill="#8884d8"
-                            label
+                            outerRadius={85}
+                            paddingAngle={5}
                         >
                             {categoryData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                <Cell key={`cell-${index}`} fill={entry.color} strokeWidth={0} />
                             ))}
                         </Pie>
                         <Tooltip
                            contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
-                           formatter={(value: any) => isPrivate ? 'R$ ••••' : formatCurrency(value)}
+                           itemStyle={{ color: '#fff' }}
+                           formatter={(value: any) => isPrivate ? '•••%' : formatCurrency(value)}
                         />
                     </PieChart>
                 </ResponsiveContainer>
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="text-center">
-                        <span className="text-xs text-slate-400 block">Total</span>
-                        <span className="font-bold text-slate-900 dark:text-white text-lg">
-                            {isPrivate ? '••••' : formatCurrency(categoryData.reduce((a, b) => a + b.value, 0))}
-                        </span>
-                    </div>
+
+                {/* Center Label */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <span className="text-xs text-slate-400 font-medium uppercase tracking-wider">Total</span>
+                    <span className="text-xl font-bold text-slate-900 dark:text-white mt-1">
+                        {isPrivate ? '••••' : formatCurrency(categoryData.reduce((a, b) => a + b.value, 0))}
+                    </span>
                 </div>
+            </div>
+
+            {/* Legend */}
+            <div className="mt-4 flex flex-wrap justify-center gap-3">
+                {categoryData.map((item, index) => (
+                    <div key={index} className="flex items-center gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                        <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">{item.name}</span>
+                    </div>
+                ))}
             </div>
         </div>
 
+        {/* Forecast Widget */}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-center">
             <div className="flex items-center gap-3 mb-6">
                 <div className="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg text-indigo-600 dark:text-indigo-400">
@@ -282,6 +292,48 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
                         you are on track to {projected > avg ? 'exceed' : 'stay under'} your 3-month average.
                     </p>
                 </div>
+            </div>
+        </div>
+
+        {/* Daily Spending Trend (New) */}
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col relative min-h-[400px]">
+             <div className="flex items-center gap-3 mb-6">
+                <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
+                    <TrendingUp size={24} />
+                </div>
+                <div>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Daily Trend</h3>
+                    <p className="text-xs text-slate-500">Accumulated Spend</p>
+                </div>
+            </div>
+            <div className="flex-1 w-full relative">
+                <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={[
+                        { day: '1', current: 150, prevAvg: 120 },
+                        { day: '5', current: 400, prevAvg: 350 },
+                        { day: '10', current: 950, prevAvg: 800 },
+                        { day: '15', current: 1200, prevAvg: 1100 },
+                        { day: '20', current: 1800, prevAvg: 1600 },
+                        { day: '25', current: 2100, prevAvg: 2000 },
+                        { day: '30', current: null, prevAvg: 2400 },
+                    ]} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                        <defs>
+                            <linearGradient id="colorCurrent" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                                <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                            </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" className="dark:stroke-slate-700" />
+                        <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                        <Tooltip
+                           contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
+                           formatter={(value: any) => isPrivate ? 'R$ ••••' : formatCurrency(value)}
+                        />
+                        <Area type="monotone" dataKey="current" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorCurrent)" />
+                        <Area type="monotone" dataKey="prevAvg" stroke="#94a3b8" strokeWidth={2} strokeDasharray="5 5" fill="none" />
+                    </AreaChart>
+                </ResponsiveContainer>
             </div>
         </div>
       </div>

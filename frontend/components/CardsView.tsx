@@ -1,8 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { CreditCard, Transaction } from '../types';
 import { Skeleton } from './ui/Skeleton';
-import { Plus, Wifi, Edit2, ThumbsUp } from 'lucide-react';
+import { Plus, Wifi, Edit2, ThumbsUp, Trash2 } from 'lucide-react';
 import { CardForm } from './CardForm';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { deleteCard } from '../services/transactionService';
+import { toast } from 'sonner';
 
 interface CardsViewProps {
   cards: CreditCard[];
@@ -16,6 +19,18 @@ export const CardsView: React.FC<CardsViewProps> = ({ cards, loading, onSuccess,
   const [showCardModal, setShowCardModal] = useState(false);
   const [editingCard, setEditingCard] = useState<CreditCard | null>(null);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const [cardToDelete, setCardToDelete] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteCard,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cards'] });
+      toast.success('Card deleted');
+      setCardToDelete(null);
+    },
+    onError: () => toast.error('Failed to delete card')
+  });
 
   const history = useMemo(() => {
       if (!selectedCardId || !transactions) return [];
@@ -91,13 +106,20 @@ export const CardsView: React.FC<CardsViewProps> = ({ cards, loading, onSuccess,
             <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-black opacity-10 rounded-full blur-2xl" />
 
             {/* Edit Overlay Button */}
-            <div className="absolute top-4 right-4 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="absolute top-4 right-4 z-20 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
                <button 
                  onClick={() => handleEdit(card)}
                  className="p-2 bg-black/20 hover:bg-black/40 rounded-full text-white backdrop-blur-sm transition-colors"
                  title="Edit Card"
                >
                  <Edit2 size={16} />
+               </button>
+               <button
+                 onClick={() => setCardToDelete(card.id)}
+                 className="p-2 bg-red-500/80 hover:bg-red-600/80 rounded-full text-white backdrop-blur-sm transition-colors"
+                 title="Delete Card"
+               >
+                 <Trash2 size={16} />
                </button>
             </div>
 
@@ -215,6 +237,29 @@ export const CardsView: React.FC<CardsViewProps> = ({ cards, loading, onSuccess,
           onSuccess={() => onSuccess && onSuccess()}
           initialData={editingCard}
         />
+      )}
+
+      {cardToDelete && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-slate-800 p-6 rounded-xl max-w-sm w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Delete Card?</h3>
+            <p className="text-slate-500 text-sm mb-6">This action cannot be undone. All transactions linked to this card will lose their association.</p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setCardToDelete(null)}
+                className="px-4 py-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-sm font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => deleteMutation.mutate(cardToDelete)}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

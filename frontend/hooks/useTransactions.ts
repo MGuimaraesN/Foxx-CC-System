@@ -104,6 +104,7 @@ export const useCreateCard = (options?: MutationOptions) => {
     mutationFn: createCard,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cards'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       if (options?.onSuccess) options.onSuccess();
     },
     onError: (error) => {
@@ -118,6 +119,7 @@ export const useUpdateCard = (options?: MutationOptions) => {
     mutationFn: updateCard,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cards'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       if (options?.onSuccess) options.onSuccess();
     },
     onError: (error) => {

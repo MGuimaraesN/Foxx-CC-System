@@ -237,50 +237,65 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSuc
           {/* Category & Tags */}
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Category</label>
-            <div className="relative">
-              <input
-                type="text"
+            <div className="relative group">
+              <select
                 {...register('category')}
-                list="budget-categories"
-                className={`w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none dark:text-white ${errors.category ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'}`}
-                placeholder="Select or type new category"
-              />
-              <datalist id="budget-categories">
-                 <option value="Food" />
-                 <option value="Transport" />
-                 <option value="Housing" />
-                 <option value="Services" />
-                 <option value="Health" />
-                 <option value="Education" />
-                 <option value="Entertainment" />
-              </datalist>
+                className={`w-full pl-4 pr-10 py-3 bg-slate-50 dark:bg-slate-800 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none appearance-none dark:text-white ${errors.category ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'}`}
+              >
+                 <option value="" disabled>Select Category</option>
+                 <option value="Food">🍽️ Food</option>
+                 <option value="Transport">🚗 Transport</option>
+                 <option value="Housing">🏠 Housing</option>
+                 <option value="Services">⚡ Services</option>
+                 <option value="Health">💊 Health</option>
+                 <option value="Education">📚 Education</option>
+                 <option value="Entertainment">🎬 Entertainment</option>
+                 <option value="Other">📦 Other</option>
+              </select>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                <ArrowDownCircle size={16} />
+              </div>
             </div>
              {errors.category && <span className="text-red-500 text-xs mt-1 block">{errors.category.message}</span>}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Tags</label>
-            <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 flex flex-wrap gap-2 focus-within:ring-2 focus-within:ring-indigo-500 ring-offset-1 dark:ring-offset-slate-900">
+            <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 flex flex-wrap gap-2 focus-within:ring-2 focus-within:ring-indigo-500 ring-offset-1 dark:ring-offset-slate-900 min-h-[46px]">
               {tags.map(tag => (
-                <span key={tag} className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-2 py-1 rounded text-xs font-medium flex items-center gap-1">
+                <span key={tag} className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-2 py-1 rounded text-xs font-medium flex items-center gap-1 animate-in fade-in zoom-in duration-200">
                   {tag}
-                  <button type="button" onClick={() => removeTag(tag)} className="hover:text-indigo-900 dark:hover:text-white"><X size={12} /></button>
+                  <button type="button" onClick={() => removeTag(tag)} className="hover:text-indigo-900 dark:hover:text-white rounded-full p-0.5 hover:bg-black/10"><X size={12} /></button>
                 </span>
               ))}
-              <div className="flex-1 min-w-[100px] flex items-center">
-                 <Tag size={14} className="text-slate-400 mr-2" />
+              <div className="flex-1 min-w-[120px] relative">
                  <input 
                     type="text"
                     value={tagInput}
                     onChange={e => setTagInput(e.target.value)}
                     onKeyDown={handleAddTag}
-                    className="bg-transparent border-none focus:ring-0 text-sm w-full dark:text-white"
-                    placeholder="Type & press Enter"
-                    list="available-tags"
+                    className="bg-transparent border-none focus:ring-0 text-sm w-full h-full py-1 pl-7 dark:text-white"
+                    placeholder="Add tag..."
                  />
-                 <datalist id="available-tags">
-                   {availableTags.map(tag => <option key={tag} value={tag} />)}
-                 </datalist>
+                 <Tag size={14} className="absolute left-1 top-1/2 -translate-y-1/2 text-slate-400" />
+                 {tagInput && (
+                   <div className="absolute top-full left-0 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-10 max-h-32 overflow-y-auto">
+                      {availableTags.filter(t => t.toLowerCase().includes(tagInput.toLowerCase()) && !tags.includes(t)).map(tag => (
+                        <div
+                          key={tag}
+                          className="px-3 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer dark:text-slate-300"
+                          onClick={() => { setTags([...tags, tag]); setTagInput(''); }}
+                        >
+                          {tag}
+                        </div>
+                      ))}
+                      {tagInput && !availableTags.includes(tagInput) && (
+                         <div className="px-3 py-2 text-xs text-slate-500 border-t border-slate-100 dark:border-slate-700">
+                           Press Enter to create "{tagInput}"
+                         </div>
+                      )}
+                   </div>
+                 )}
               </div>
             </div>
           </div>
@@ -316,9 +331,9 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSuc
           </div>
 
           {/* Options Row */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4 auto-rows-fr">
              {/* Recurring Toggle */}
-            <div className={`p-4 rounded-lg border transition-colors ${isRecurring ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800' : 'bg-slate-50 border-transparent dark:bg-slate-800'}`}>
+            <div className={`p-4 rounded-lg border transition-colors h-full flex flex-col justify-start ${isRecurring ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800' : 'bg-slate-50 border-transparent dark:bg-slate-800'}`}>
               <div className="flex items-center space-x-3 mb-2">
                 <input 
                   type="checkbox" 
@@ -355,16 +370,15 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSuc
 
             {/* Installments Toggle */}
             {watchType === TransactionType.EXPENSE && (
-              <div className={`p-4 rounded-lg border transition-colors ${isInstallment ? 'bg-indigo-50 border-indigo-200 dark:bg-indigo-900/20 dark:border-indigo-800' : 'bg-slate-50 border-transparent dark:bg-slate-800'}`}>
+              <div className={`p-4 rounded-lg border transition-colors h-full flex flex-col justify-start ${isInstallment ? 'bg-indigo-50 border-indigo-200 dark:bg-indigo-900/20 dark:border-indigo-800' : 'bg-slate-50 border-transparent dark:bg-slate-800'}`}>
                 <div className="flex items-center space-x-3 mb-2">
                   <input 
                     type="checkbox" 
                     id="installment-toggle"
-                    disabled={isEditing && initialData?.isInstallment}
                     {...register('isInstallment')}
                     className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500 disabled:opacity-50"
                   />
-                  <label htmlFor="installment-toggle" className={`text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2 cursor-pointer select-none ${isEditing && initialData?.isInstallment ? 'opacity-50' : ''}`}>
+                  <label htmlFor="installment-toggle" className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2 cursor-pointer select-none">
                    <Layers size={16} /> Installments
                   </label>
                 </div>

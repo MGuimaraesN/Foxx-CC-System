@@ -34,6 +34,14 @@ export const deleteTransaction = async (id: string): Promise<void> => {
   await api.delete(`/transactions/${id}`);
 };
 
+export const bulkUpdateStatus = async (ids: string[], status: 'PAID' | 'PENDING'): Promise<void> => {
+  await api.patch('/transactions/bulk-status', { ids, status });
+};
+
+export const bulkDelete = async (ids: string[]): Promise<void> => {
+  await api.post('/transactions/bulk-delete', { ids });
+};
+
 // --- INTELLIGENT DASHBOARD STATS ---
 export const fetchDashboardStats = async (): Promise<DashboardStats> => {
   const response = await api.get('/dashboard/stats');
@@ -53,6 +61,10 @@ export const createCard = async (cardData: Omit<CreditCard, 'id'>): Promise<Cred
 export const updateCard = async (cardData: CreditCard): Promise<CreditCard> => {
   const response = await api.put(`/cards/${cardData.id}`, cardData);
   return response.data;
+};
+
+export const deleteCard = async (id: string): Promise<void> => {
+  await api.delete(`/cards/${id}`);
 };
 
 // --- BUDGETS ---

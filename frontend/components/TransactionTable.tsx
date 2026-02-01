@@ -13,12 +13,15 @@ interface TransactionTableProps {
   isDeleting?: boolean;
   currency?: string;
   isPrivate?: boolean;
+  selectedIds?: string[];
+  onSelect?: (id: string) => void;
+  onSelectAll?: (checked: boolean) => void;
 }
 
 type SortKey = 'date' | 'amount' | 'description';
 type SortDirection = 'asc' | 'desc';
 
-export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions, loading, cards, onDelete, onEdit, onStatusToggle, isDeleting, currency = 'BRL', isPrivate = false }) => {
+export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions, loading, cards, onDelete, onEdit, onStatusToggle, isDeleting, currency = 'BRL', isPrivate = false, selectedIds = [], onSelect, onSelectAll }) => {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: SortDirection } | null>(null);
 
@@ -124,6 +127,16 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
           <table className="w-full text-left">
             <thead className="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 text-xs uppercase font-medium">
               <tr>
+                {onSelectAll && (
+                  <th className="px-4 py-4 w-10 text-center">
+                    <input
+                      type="checkbox"
+                      className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                      checked={transactions.length > 0 && selectedIds.length === transactions.length}
+                      onChange={(e) => onSelectAll(e.target.checked)}
+                    />
+                  </th>
+                )}
                 <th className="px-6 py-4 w-12 text-center">Type</th>
                 <th className="px-6 py-4 w-24">Status</th>
                 <th 
@@ -150,8 +163,20 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-              {sortedTransactions.map((t) => (
-                <tr key={t.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors group">
+              {sortedTransactions.map((t) => {
+                const isSelected = selectedIds.includes(t.id);
+                return (
+                <tr key={t.id} className={`transition-colors group ${isSelected ? 'bg-indigo-50/50 dark:bg-indigo-900/10' : 'hover:bg-slate-50 dark:hover:bg-slate-700/50'}`}>
+                  {onSelect && (
+                    <td className="px-4 py-4 text-center">
+                      <input
+                        type="checkbox"
+                        className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                        checked={isSelected}
+                        onChange={() => onSelect(t.id)}
+                      />
+                    </td>
+                  )}
                   <td className="px-6 py-4 text-center">
                      {t.type === TransactionType.INCOME ? (
                        <div className="inline-flex p-1.5 rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
@@ -259,7 +284,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
                     </td>
                   )}
                 </tr>
-              ))}
+              )})}
             </tbody>
           </table>
         </div>
