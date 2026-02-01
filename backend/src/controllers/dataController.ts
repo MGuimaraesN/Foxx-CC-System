@@ -34,7 +34,7 @@ const processMessage = async (item: QueueItem) => {
            const prompt = `Extract transaction data from this text: "${item.text}". Return JSON with keys: "description" (string), "amount" (number), "date" (ISOString, use today if missing), "status" (PAID or PENDING), "cardName" (string or null). If status is not clear, default to PENDING unless "pago" or "paid" is mentioned. Return ONLY the JSON object.`;
 
            const result = await ai.models.generateContent({
-               model: 'gemini-2.0-flash',
+               model: 'gemini-2.5-flash',
                contents: [{ parts: [{ text: prompt }] }]
            });
 
@@ -50,7 +50,7 @@ const processMessage = async (item: QueueItem) => {
       if (extractedData && extractedData.amount && extractedData.description) {
           const amount = Math.abs(extractedData.amount); // Always positive for now, logic below handles sign
           const description = extractedData.description;
-          const status = extractedData.status === 'PAID' ? 'PAID' : 'PENDING';
+          const status = 'PENDING';
           const date = extractedData.date ? new Date(extractedData.date) : new Date();
 
           // Find card if specified

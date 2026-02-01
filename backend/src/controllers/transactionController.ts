@@ -258,7 +258,7 @@ export const createBulkTransactions = async (req: AuthRequest, res: Response) =>
                      const prompt = `Categorize the following descriptions into single-word categories (e.g. Food, Transport, Shopping, Services, Entertainment, Health, Home, Travel, Education). Descriptions: ${JSON.stringify(batch)}. Return ONLY a JSON array of strings.`;
 
                      const result = await ai.models.generateContent({
-                        model: 'gemini-2.0-flash',
+                        model: 'gemini-2.5-flash',
                         contents: [{ parts: [{ text: prompt }] }]
                      });
 
