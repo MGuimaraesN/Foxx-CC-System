@@ -35,7 +35,7 @@ const NavItem: React.FC<{
 
 const App: React.FC = () => {
   const [isAuth, setIsAuth] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('cc_dark_mode') === 'true');
   const [showModal, setShowModal] = useState(false);
   const [currentView, setCurrentView] = useState<ViewState>('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -91,6 +91,7 @@ const App: React.FC = () => {
     } else {
       document.documentElement.classList.remove('dark');
     }
+    localStorage.setItem('cc_dark_mode', String(darkMode));
   }, [darkMode]);
 
   const handleCreateSuccess = () => {

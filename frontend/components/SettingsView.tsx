@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Moon, Shield, Globe, Monitor, Database, Download, Upload, AlertTriangle } from 'lucide-react';
 import { generateBackup, restoreBackup } from '../services/userService';
 import { toast } from 'sonner';
@@ -10,6 +10,8 @@ interface SettingsViewProps {
 
 export const SettingsView: React.FC<SettingsViewProps> = ({ darkMode, setDarkMode }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [currency, setCurrency] = useState(() => localStorage.getItem('cc_currency') || 'BRL');
+  const [language, setLanguage] = useState(() => localStorage.getItem('cc_language') || 'en');
 
   const handleRestore = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -137,7 +139,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ darkMode, setDarkMod
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
              <div>
                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Primary Currency</label>
-               <select className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:text-white">
+               <select
+                 value={currency}
+                 onChange={(e) => {
+                   setCurrency(e.target.value);
+                   localStorage.setItem('cc_currency', e.target.value);
+                 }}
+                 className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:text-white"
+               >
                  <option value="BRL">Real Brasileiro (BRL)</option>
                  <option value="USD">US Dollar (USD)</option>
                  <option value="EUR">Euro (EUR)</option>
@@ -145,7 +154,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ darkMode, setDarkMod
              </div>
              <div>
                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Language</label>
-               <select className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:text-white">
+               <select
+                 value={language}
+                 onChange={(e) => {
+                   setLanguage(e.target.value);
+                   localStorage.setItem('cc_language', e.target.value);
+                 }}
+                 className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:text-white"
+               >
                  <option value="en">English</option>
                  <option value="pt">Português</option>
                </select>
