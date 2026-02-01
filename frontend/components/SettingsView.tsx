@@ -3,6 +3,7 @@ import { Moon, Shield, Globe, Monitor, Database, Download, Upload, AlertTriangle
 import { generateBackup, restoreBackup, updateUserSettings } from '../services/userService';
 import { toast } from 'sonner';
 import { UserProfile } from '../types';
+import { useLanguage } from '../context/LanguageContext';
 
 interface SettingsViewProps {
   darkMode: boolean;
@@ -17,6 +18,7 @@ interface SettingsViewProps {
 export const SettingsView: React.FC<SettingsViewProps> = ({
   darkMode, setDarkMode, currency, setCurrency, language, setLanguage, userProfile
 }) => {
+  const { t, setLanguage: setContextLanguage } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [whatsappPhone, setWhatsappPhone] = useState(userProfile?.whatsappPhone || '');
 
@@ -28,6 +30,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
   const handleLanguageChange = async (newLanguage: string) => {
     setLanguage(newLanguage);
+    setContextLanguage(newLanguage as any);
     await updateUserSettings({ language: newLanguage });
     toast.success('Language updated');
   };
@@ -79,7 +82,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
         <div className="p-6 border-b border-slate-100 dark:border-slate-700">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-             <Bot size={20} className="text-emerald-500" /> WhatsApp Assistant
+             <Bot size={20} className="text-emerald-500" /> {t('settings.whatsapp')}
           </h3>
         </div>
         <div className="p-6 space-y-6">
@@ -98,7 +101,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       onClick={handleWhatsappSave}
                       className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition-colors"
                    >
-                     Save
+                     {t('common.save')}
                    </button>
                  </div>
                  <p className="text-xs text-slate-500 mt-2">Enter your number with country code (e.g., 55 for Brazil) to link your account.</p>
@@ -121,7 +124,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
         <div className="p-6 border-b border-slate-100 dark:border-slate-700">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-            <Shield size={20} className="text-indigo-500" /> Data Safeguard
+            <Shield size={20} className="text-indigo-500" /> {t('settings.data')}
           </h3>
         </div>
         <div className="p-6 space-y-6">
@@ -130,7 +133,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                <Database size={24} />
              </div>
              <div className="flex-1">
-               <h4 className="font-semibold text-slate-900 dark:text-white">Full System Backup</h4>
+               <h4 className="font-semibold text-slate-900 dark:text-white">{t('settings.backup')}</h4>
                <p className="text-sm text-slate-500 dark:text-slate-400">Download all your data (Transactions, Cards, Profile) as a JSON file.</p>
              </div>
              <button 
@@ -149,7 +152,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                <Upload size={24} />
              </div>
              <div className="flex-1">
-               <h4 className="font-semibold text-slate-900 dark:text-white">Restore Data</h4>
+               <h4 className="font-semibold text-slate-900 dark:text-white">{t('settings.restore')}</h4>
                <p className="text-sm text-slate-500 dark:text-slate-400">Overwrite current data with a backup file.</p>
                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
                  <AlertTriangle size={10} /> This action cannot be undone.
@@ -176,13 +179,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
         <div className="p-6 border-b border-slate-100 dark:border-slate-700">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-            <Monitor size={20} className="text-slate-400" /> Appearance
+            <Monitor size={20} className="text-slate-400" /> {t('settings.appearance')}
           </h3>
         </div>
         <div className="p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-slate-900 dark:text-white">Dark Mode</p>
+              <p className="font-medium text-slate-900 dark:text-white">{t('settings.darkMode')}</p>
               <p className="text-sm text-slate-500">Switch between light and dark themes</p>
             </div>
             <button 
@@ -199,13 +202,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
         <div className="p-6 border-b border-slate-100 dark:border-slate-700">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-            <Globe size={20} className="text-slate-400" /> Localization
+            <Globe size={20} className="text-slate-400" /> {t('settings.localization')}
           </h3>
         </div>
         <div className="p-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
              <div>
-               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Primary Currency</label>
+               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('settings.currency')}</label>
                <select
                  value={currency}
                  onChange={(e) => handleCurrencyChange(e.target.value)}
@@ -217,14 +220,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                </select>
              </div>
              <div>
-               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Language</label>
+               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('settings.language')}</label>
                <select
                  value={language}
                  onChange={(e) => handleLanguageChange(e.target.value)}
                  className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:text-white"
                >
                  <option value="en">English</option>
-                 <option value="pt">Português</option>
+                 <option value="pt-BR">Português</option>
                </select>
              </div>
           </div>

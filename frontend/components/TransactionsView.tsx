@@ -8,6 +8,7 @@ import { bulkUpdateStatus, bulkDelete } from '../services/transactionService';
 import { exportToPDF, exportToExcel } from '../services/exportService';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { useLanguage } from '../context/LanguageContext';
 
 interface TransactionsViewProps {
   transactions: Transaction[];
@@ -22,6 +23,7 @@ interface TransactionsViewProps {
 }
 
 export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions, loading, cards, onDelete, isDeleting, error, showToast, currency = 'BRL', isPrivate = false }) => {
+  const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<'ALL' | TransactionType>('ALL');
   const [statusFilter, setStatusFilter] = useState<'ALL' | TransactionStatus>('ALL');
@@ -67,7 +69,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
     queryClient.invalidateQueries({ queryKey: ['transactions'] });
     queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
     queryClient.invalidateQueries({ queryKey: ['budgets'] });
-    toast.info('Syncing latest transactions...');
+    toast.info(t('transactions.syncBot') + '...');
   };
 
   const handleSelect = (id: string) => {
@@ -204,7 +206,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between">
            <div>
-             <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Total Income</p>
+             <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">{t('common.total')} {t('transactions.income')}</p>
              <h3 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">{formatMoney(summary.income)}</h3>
            </div>
            <div className="p-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-full text-emerald-600 dark:text-emerald-400">
@@ -213,7 +215,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
         </div>
         <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between">
            <div>
-             <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Total Expenses</p>
+             <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">{t('common.total')} {t('transactions.expense')}</p>
              <h3 className="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">{formatMoney(summary.expense)}</h3>
            </div>
            <div className="p-3 bg-red-50 dark:bg-red-900/30 rounded-full text-red-600 dark:text-red-400">
@@ -241,7 +243,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input
                 type="text"
-                placeholder="Search description..."
+                placeholder={t('common.search')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-all"
@@ -251,7 +253,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
             <div className="w-48">
                 <input
                     type="text"
-                    placeholder="Category"
+                    placeholder={t('transactions.category')}
                     value={categoryFilter}
                     onChange={(e) => setCategoryFilter(e.target.value)}
                     className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm dark:text-white"
@@ -263,7 +265,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
                 className={`px-3 py-2 rounded-lg border text-sm font-medium flex items-center gap-2 transition-colors ${isExpanded ? 'bg-indigo-50 border-indigo-200 text-indigo-600 dark:bg-indigo-900/20 dark:border-indigo-800 dark:text-indigo-300' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'}`}
             >
                 <Filter size={16} />
-                Filters
+                {t('common.filter')}
             </button>
           </div>
 
@@ -273,21 +275,21 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
                 <button
                     onClick={handleSyncBot}
                     className="px-3 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border-r border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
-                    title="Sync Bot"
+                    title={t('transactions.syncBot')}
                 >
                     <RefreshCw size={18} className="text-indigo-500" />
                 </button>
                 <button
                     onClick={handleExportPDF}
                     className="px-3 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border-r border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
-                    title="Export PDF"
+                    title={t('transactions.exportPDF')}
                 >
                     <FileText size={18} className="text-red-500" />
                 </button>
                 <button
                     onClick={handleExportExcel}
                     className="px-3 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
-                    title="Export Excel"
+                    title={t('transactions.exportExcel')}
                 >
                     <Sheet size={18} className="text-emerald-500" />
                 </button>
@@ -323,7 +325,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
                     onChange={(e) => setCardFilter(e.target.value)}
                     className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm dark:text-white"
                 >
-                    <option value="ALL">All Cards</option>
+                    <option value="ALL">{t('transactions.allCards')}</option>
                     {cards.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
 
@@ -333,7 +335,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
                         className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-left flex items-center justify-between dark:text-white focus:ring-2 focus:ring-indigo-500"
                     >
                         <span className="truncate">
-                        {selectedTags.length === 0 ? 'Tags' : `${selectedTags.length} selected`}
+                        {selectedTags.length === 0 ? t('transactions.tags') : `${selectedTags.length} ${t('transactions.selected')}`}
                         </span>
                         <TagIcon size={14} className="text-slate-400" />
                     </button>
@@ -383,19 +385,19 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
 
       {selectedIds.length > 0 && (
         <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-4 z-50 animate-in slide-in-from-bottom-10 fade-in duration-300">
-           <span className="text-sm font-medium">{selectedIds.length} selected</span>
+           <span className="text-sm font-medium">{selectedIds.length} {t('transactions.selected')}</span>
            <div className="h-4 w-px bg-slate-700"></div>
            <button
              onClick={() => bulkStatusMutation.mutate('PAID')}
              className="flex items-center gap-2 text-emerald-400 hover:text-emerald-300 font-medium text-sm transition-colors"
            >
-             <CheckCircle size={16} /> Mark Paid
+             <CheckCircle size={16} /> {t('transactions.markPaid')}
            </button>
            <button
              onClick={() => bulkDeleteMutation.mutate()}
              className="flex items-center gap-2 text-red-400 hover:text-red-300 font-medium text-sm transition-colors"
            >
-             <Trash2 size={16} /> Delete
+             <Trash2 size={16} /> {t('common.delete')}
            </button>
            <button
              onClick={() => setSelectedIds([])}

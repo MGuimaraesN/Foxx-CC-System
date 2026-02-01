@@ -3,6 +3,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { CreditCard, TrendingUp, TrendingDown, AlertCircle, HeartPulse, Clock, Activity, AlertTriangle, PieChart as PieChartIcon } from 'lucide-react';
 import { DashboardStats } from '../types';
 import { Skeleton } from './ui/Skeleton';
+import { useLanguage } from '../context/LanguageContext';
 
 interface DashboardProps {
   stats: DashboardStats | null;
@@ -31,6 +32,8 @@ const StatCard: React.FC<{ title: string; value: string; icon: React.ReactNode; 
 );
 
 export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency = 'BRL', isPrivate = false }) => {
+  const { t } = useLanguage();
+
   if (isLoading && !stats) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -92,11 +95,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
             <HeartPulse size={24} />
           </div>
           <div className="flex-1">
-            <h4 className="font-bold text-sm uppercase tracking-wide">Financial Health Check</h4>
+            <h4 className="font-bold text-sm uppercase tracking-wide">{t('dashboard.financialHealth')}</h4>
             <p className="text-sm font-medium mt-1">{stats.financialHealth.message}</p>
           </div>
           <div className="text-right hidden sm:block">
-             <p className="text-xs opacity-75">3-Month Avg</p>
+             <p className="text-xs opacity-75">{t('dashboard.last3MoAvg')}</p>
              <p className="font-bold">{formatCurrency(stats.financialHealth.averageLast3Months)}</p>
           </div>
         </div>
@@ -104,14 +107,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard 
-          title="Open Invoice (Current)" 
+          title={t('dashboard.openInvoice')}
           value={formatCurrency(stats?.openInvoice || 0)} 
           icon={<CreditCard size={20} />} 
-          subtext="Due in 12 days"
+          subtext={t('dashboard.dueIn') + ' 12 ' + t('dashboard.days')}
           loading={isLoading}
         />
         <StatCard 
-          title="Upcoming Maturities" 
+          title={t('dashboard.upcomingMaturities')}
           value={formatCurrency(stats?.upcomingMaturities || 0)} 
           icon={<Clock size={20} />} 
           subtext="Next 7 Days"
@@ -119,14 +122,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
           colorClass="text-orange-600 dark:text-orange-400"
         />
         <StatCard 
-          title="Available Limit" 
+          title={t('dashboard.availableLimit')}
           value={formatCurrency((stats?.totalLimit || 0) - (stats?.usedLimit || 0))} 
           icon={<AlertCircle size={20} />} 
-          subtext={`${((stats?.usedLimit || 0) / (stats?.totalLimit || 1) * 100).toFixed(0)}% utilized`}
+          subtext={`${((stats?.usedLimit || 0) / (stats?.totalLimit || 1) * 100).toFixed(0)}% ${t('dashboard.utilized')}`}
           loading={isLoading}
         />
         <StatCard 
-          title="Last 3 Mo. Avg" 
+          title={t('dashboard.last3MoAvg')}
           value={formatCurrency(stats?.financialHealth?.averageLast3Months || 0)} 
           icon={<TrendingDown size={20} />} 
           subtext="Rolling average baseline"
@@ -138,7 +141,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
             <div className="col-span-full p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 text-red-800 dark:bg-red-900/20 dark:border-red-800 dark:text-red-300 animate-pulse">
                 <AlertTriangle size={24} />
                 <div>
-                   <h4 className="font-bold">Limit Approaching</h4>
+                   <h4 className="font-bold">{t('dashboard.limitApproaching')}</h4>
                    <p className="text-sm">You have used {((stats?.usedLimit || 0) / (stats?.totalLimit || 1) * 100).toFixed(0)}% of your total credit limit.</p>
                 </div>
             </div>
@@ -148,7 +151,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 h-[400px] flex flex-col relative">
             <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Expense vs Average</h3>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t('dashboard.expenseVsAvg')}</h3>
             <div className="flex items-center gap-4 text-xs text-slate-500">
                 <div className="flex items-center gap-1"><div className="w-3 h-3 bg-indigo-500 rounded-full"></div> Monthly Expense</div>
                 <div className="flex items-center gap-1"><div className="w-3 h-3 bg-emerald-400 rounded-full"></div> 3-Mo Average</div>
@@ -196,8 +199,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
                     <PieChartIcon size={24} />
                 </div>
                 <div>
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Expense Breakdown</h3>
-                    <p className="text-xs text-slate-500">By Category</p>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t('dashboard.expenseBreakdown')}</h3>
+                    <p className="text-xs text-slate-500">{t('transactions.category')}</p>
                 </div>
             </div>
             <div className="flex-1 w-full relative">
@@ -227,7 +230,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
 
                 {/* Center Label */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <span className="text-xs text-slate-400 font-medium uppercase tracking-wider">Total</span>
+                    <span className="text-xs text-slate-400 font-medium uppercase tracking-wider">{t('common.total')}</span>
                     <span className="text-xl font-bold text-slate-900 dark:text-white mt-1">
                         {isPrivate ? '••••' : formatCurrency(categoryData.reduce((a, b) => a + b.value, 0))}
                     </span>
@@ -252,14 +255,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
                     <Activity size={24} />
                 </div>
                 <div>
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Spending Forecast</h3>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t('dashboard.spendingForecast')}</h3>
                     <p className="text-xs text-slate-500">Based on current pace</p>
                 </div>
             </div>
 
             <div className="space-y-6">
                 <div>
-                    <p className="text-sm text-slate-500 mb-1">Projected Month Total</p>
+                    <p className="text-sm text-slate-500 mb-1">{t('dashboard.projectedTotal')}</p>
                     <p className="text-3xl font-bold text-slate-900 dark:text-white">{formatCurrency(projected)}</p>
                 </div>
 
@@ -275,7 +278,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
 
                 <div>
                     <div className="flex justify-between text-xs text-slate-500 mb-2">
-                        <span>Month Progress</span>
+                        <span>{t('dashboard.monthProgress')}</span>
                         <span>{pacePercentage.toFixed(0)}%</span>
                     </div>
                     <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-3 overflow-hidden">
@@ -289,7 +292,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
                 <div className="p-4 bg-slate-50 dark:bg-slate-700/30 rounded-lg border border-slate-100 dark:border-slate-700/50">
                     <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                         At your current daily spending of <strong>{formatCurrency(currentSpent / currentDay)}</strong>,
-                        you are on track to {projected > avg ? 'exceed' : 'stay under'} your 3-month average.
+                        you are {t('dashboard.onTrack')} {projected > avg ? t('dashboard.exceed') : t('dashboard.stayUnder')} your 3-month {t('dashboard.average')}.
                     </p>
                 </div>
             </div>
@@ -302,7 +305,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
                     <TrendingUp size={24} />
                 </div>
                 <div>
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Daily Trend</h3>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t('dashboard.dailyTrend')}</h3>
                     <p className="text-xs text-slate-500">Accumulated Spend</p>
                 </div>
             </div>

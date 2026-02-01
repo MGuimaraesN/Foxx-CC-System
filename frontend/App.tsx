@@ -16,6 +16,7 @@ import { useTransactions, useCards, useDashboardStats, useCreateTransaction, use
 import { isAuthenticated, logout, getUserProfile } from './services/userService';
 import { Toaster, toast } from 'sonner';
 import { UserProfile } from './types';
+import { LanguageProvider, useLanguage } from './context/LanguageContext';
 
 type ViewState = 'dashboard' | 'transactions' | 'cards' | 'budgets' | 'goals' | 'news' | 'import' | 'settings' | 'user';
 
@@ -35,12 +36,12 @@ const NavItem: React.FC<{
   </button>
 );
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
   const [isAuth, setIsAuth] = useState(false);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('cc_dark_mode') === 'true');
   const [isPrivate, setIsPrivate] = useState(false);
   const [currency, setCurrency] = useState(() => localStorage.getItem('cc_currency') || 'BRL');
-  const [language, setLanguage] = useState(() => localStorage.getItem('cc_language') || 'en');
+  const { language, setLanguage, t } = useLanguage();
   const [showModal, setShowModal] = useState(false);
   const [currentView, setCurrentView] = useState<ViewState>('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -62,7 +63,7 @@ const App: React.FC = () => {
         getUserProfile().then(profile => {
           setUserProfile(profile);
           if (profile.currency) setCurrency(profile.currency);
-          if (profile.language) setLanguage(profile.language);
+          if (profile.language) setLanguage(profile.language as any);
         });
     }
   }, [isAuth]);
@@ -134,12 +135,12 @@ const App: React.FC = () => {
             <Dashboard stats={stats} isLoading={isLoading} currency={currency} isPrivate={isPrivate} />
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Recent Activity</h3>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t('dashboard.title')}</h3>
                 <button 
                   onClick={() => setCurrentView('transactions')}
                   className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline"
                 >
-                  View All
+                  {t('common.actions')}
                 </button>
               </div>
               <TransactionTable 
@@ -148,7 +149,7 @@ const App: React.FC = () => {
                 cards={cards}
                 currency={currency}
                 isPrivate={isPrivate}
-                onEdit={(t) => { setShowModal(true); /* Logic to set editing transaction needs state lift or context, for now just opening form */ }}
+                onEdit={(t) => { setShowModal(true); }}
               />
             </div>
           </div>
@@ -210,15 +211,15 @@ const App: React.FC = () => {
 
   const getHeaderTitle = () => {
     switch(currentView) {
-      case 'dashboard': return 'Financial Overview';
-      case 'transactions': return 'All Transactions';
-      case 'cards': return 'My Cards';
-      case 'budgets': return 'Budget Management';
-      case 'goals': return 'Savings Goals';
-      case 'news': return 'Market News';
-      case 'import': return 'Import Data';
-      case 'settings': return 'System Settings';
-      case 'user': return 'User Profile';
+      case 'dashboard': return t('dashboard.title');
+      case 'transactions': return t('transactions.title');
+      case 'cards': return t('transactions.allCards');
+      case 'budgets': return 'Budgets';
+      case 'goals': return 'Goals';
+      case 'news': return 'News';
+      case 'import': return 'Import';
+      case 'settings': return t('settings.title');
+      case 'user': return 'Profile';
     }
   };
 
@@ -412,5 +413,11 @@ const App: React.FC = () => {
     </>
   );
 };
+
+const App: React.FC = () => (
+  <LanguageProvider>
+    <AppContent />
+  </LanguageProvider>
+);
 
 export default App;
