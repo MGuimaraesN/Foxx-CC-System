@@ -107,31 +107,37 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading }) => {
         {isLoading ? (
           <Skeleton className="w-full h-full" />
         ) : (
-          <div className="flex-1 w-full min-h-0 relative">
+          <div className="flex-1 w-full min-h-[300px] relative">
             <div className="absolute inset-0">
-              <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={stats?.monthlyTrend} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" className="dark:stroke-slate-700" />
-                  <XAxis 
-                    dataKey="month" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fill: '#64748b' }} 
-                    dy={10}
-                  />
-                  <YAxis 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fill: '#64748b' }} 
-                    tickFormatter={(value) => `R$${value/1000}k`}
-                  />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
-                  />
-                  <Bar dataKey="amount" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={40} />
-                  <Line type="monotone" dataKey="average" stroke="#34d399" strokeWidth={2} dot={false} strokeDasharray="5 5" />
-                </ComposedChart>
-              </ResponsiveContainer>
+              {stats?.monthlyTrend && stats.monthlyTrend.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={stats.monthlyTrend} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" className="dark:stroke-slate-700" />
+                    <XAxis
+                      dataKey="month"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: '#64748b' }}
+                      dy={10}
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: '#64748b' }}
+                      tickFormatter={(value) => `R$${value/1000}k`}
+                    />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
+                    />
+                    <Bar dataKey="amount" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={40} />
+                    <Line type="monotone" dataKey="average" stroke="#34d399" strokeWidth={2} dot={false} strokeDasharray="5 5" />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-slate-400">
+                  No data available for chart
+                </div>
+              )}
             </div>
           </div>
         )}
