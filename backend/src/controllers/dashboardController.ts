@@ -37,14 +37,32 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
         if (t.card) {
             const closingDay = t.card.closingDay;
             const txDate = new Date(t.date);
+            const currentDay = now.getDate();
 
-            // If transaction date is after closing day, it belongs to next invoice
-            if (txDate.getDate() > closingDay) {
-                // Next invoice, skip from open invoice of current cycle
-                continue;
+            let cycleStart: Date;
+            let cycleEnd: Date;
+
+            // Calculate strict billing cycle based on today vs closingDay
+            if (currentDay <= closingDay) {
+                // Invoice closes this month. Cycle started previous month.
+                cycleStart = new Date(now.getFullYear(), now.getMonth() - 1, closingDay + 1);
+                cycleEnd = new Date(now.getFullYear(), now.getMonth(), closingDay);
+            } else {
+                // Invoice closes next month. Cycle started this month.
+                cycleStart = new Date(now.getFullYear(), now.getMonth(), closingDay + 1);
+                cycleEnd = new Date(now.getFullYear(), now.getMonth() + 1, closingDay);
             }
+
+            cycleStart.setHours(0, 0, 0, 0);
+            cycleEnd.setHours(23, 59, 59, 999);
+
+            // Only count if strictly within the current open cycle
+            if (txDate >= cycleStart && txDate <= cycleEnd) {
+                openInvoice += t.amount;
+            }
+        } else {
+            openInvoice += t.amount;
         }
-        openInvoice += t.amount;
     }
 
     // Closed Invoice (Paid Expenses this month)

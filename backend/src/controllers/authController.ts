@@ -17,6 +17,8 @@ const loginSchema = z.object({
 });
 
 const settingsSchema = z.object({
+  name: z.string().min(1).optional(),
+  email: z.string().email().optional(),
   currency: z.string().optional(),
   language: z.string().optional(),
   whatsappPhone: z.string().optional(),
@@ -145,11 +147,13 @@ export const updateSettings = async (req: AuthRequest, res: Response) => {
   }
 
   try {
-    const { currency, language, whatsappPhone } = settingsSchema.parse(req.body);
+    const { name, email, currency, language, whatsappPhone } = settingsSchema.parse(req.body);
 
     const user = await prisma.user.update({
       where: { id: req.user.id },
       data: {
+        ...(name && { name }),
+        ...(email && { email }),
         ...(currency && { currency }),
         ...(language && { language }),
         ...(whatsappPhone && { whatsappPhone }),

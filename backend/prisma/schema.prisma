@@ -16,7 +16,7 @@ model User {
   createdAt    DateTime @default(now())
 
   currency     String   @default("BRL")
-  language     String   @default("en")
+  language     String   @default("pt-BR")
   whatsappPhone String? @unique
   refreshToken String?
 

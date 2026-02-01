@@ -149,18 +149,21 @@ export const CardsView: React.FC<CardsViewProps> = ({ cards, loading, onSuccess,
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Limit Utilization</h3>
           <div className="space-y-4">
             {cards.map(card => {
-               // Mock utilization for visualization (Ideally real data)
-               const randomUtil = Math.floor(Math.random() * 80) + 10;
+               const cardExpenses = transactions.filter(t => t.cardId === card.id && (t.type === 'EXPENSE' || t.amount < 0));
+               const totalUsed = cardExpenses.reduce((acc, t) => acc + Math.abs(t.amount), 0);
+               const utilPercent = card.limit > 0 ? (totalUsed / card.limit) * 100 : 0;
+               const visualPercent = Math.min(100, utilPercent);
+
                return (
                  <div key={card.id}>
                    <div className="flex justify-between text-sm mb-1">
                      <span className="text-slate-700 dark:text-slate-300">{card.name}</span>
-                     <span className="text-slate-500">{randomUtil}%</span>
+                     <span className="text-slate-500">{utilPercent.toFixed(1)}%</span>
                    </div>
                    <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2.5">
                      <div
-                        className={`h-2.5 rounded-full ${randomUtil > 75 ? 'bg-red-500' : 'bg-indigo-600'}`}
-                        style={{ width: `${randomUtil}%` }}
+                        className={`h-2.5 rounded-full ${utilPercent > 75 ? 'bg-red-500' : 'bg-indigo-600'}`}
+                        style={{ width: `${visualPercent}%` }}
                       ></div>
                    </div>
                  </div>
