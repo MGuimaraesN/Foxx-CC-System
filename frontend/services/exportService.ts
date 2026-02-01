@@ -15,12 +15,14 @@ const getCardName = (cardId: string | undefined, cards: CreditCard[]) => {
   return card ? card.name : 'Unknown Card';
 };
 
+const sysName = import.meta.env.VITE_APP_NAME;
+
 export const exportToPDF = (transactions: Transaction[], cards: CreditCard[]) => {
   const doc = new jsPDF();
 
   // Header
   doc.setFontSize(18);
-  doc.text('Relatório de Gastos - CC-Expense', 14, 22);
+  doc.text(`Relatório de Gastos - ${sysName}`, 14, 22);
   
   doc.setFontSize(10);
   doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`, 14, 30);
@@ -83,7 +85,7 @@ export const exportToPDF = (transactions: Transaction[], cards: CreditCard[]) =>
   doc.setFont('helvetica', 'bold');
   doc.text(`Saldo Líquido: ${formatCurrency(netBalance)}`, 14, finalY + 20);
 
-  doc.save(`cc-expense-relatorio-${new Date().toISOString().split('T')[0]}.pdf`);
+  doc.save(`${sysName.toLowerCase().replace(/\s+/g, '-')}-relatorio-${new Date().toISOString().split('T')[0]}.pdf`);
 };
 
 export const exportToExcel = (transactions: Transaction[], cards: CreditCard[]) => {
@@ -114,5 +116,5 @@ export const exportToExcel = (transactions: Transaction[], cards: CreditCard[]) 
   ];
   worksheet['!cols'] = wscols;
 
-  XLSX.writeFile(workbook, `cc-expense-relatorio-${new Date().toISOString().split('T')[0]}.xlsx`);
+  XLSX.writeFile(workbook, `${sysName.toLowerCase().replace(/\s+/g, '-')}-relatorio-${new Date().toISOString().split('T')[0]}.xlsx`);
 };

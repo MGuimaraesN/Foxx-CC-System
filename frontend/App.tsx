@@ -43,6 +43,7 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile>({ name: '', email: '', avatarUrl: '' });
+  const sysName = import.meta.env.VITE_APP_NAME;
 
   // Check Auth on Mount & Fix F5 Refresh Logic
   useEffect(() => {
@@ -233,7 +234,7 @@ const App: React.FC = () => {
           <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold">C</span>
           </div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-white">CC-Expense</h1>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white">{sysName}</h1>
         </div>
         
         <nav className="space-y-2">
