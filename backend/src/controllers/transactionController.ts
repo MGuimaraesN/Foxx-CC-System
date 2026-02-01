@@ -179,7 +179,7 @@ export const createTransaction = async (req: AuthRequest, res: Response) => {
 
 export const deleteTransaction = async (req: AuthRequest, res: Response) => {
     if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
 
     try {
         // Verify ownership
@@ -197,7 +197,7 @@ export const deleteTransaction = async (req: AuthRequest, res: Response) => {
 
 export const updateTransaction = async (req: AuthRequest, res: Response) => {
     if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
 
     try {
         const tx = await prisma.transaction.findUnique({ where: { id } });

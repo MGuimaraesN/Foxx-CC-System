@@ -44,7 +44,7 @@ export const createCard = async (req: AuthRequest, res: Response) => {
 
 export const updateCard = async (req: AuthRequest, res: Response) => {
   if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
 
   try {
     const existing = await prisma.card.findUnique({ where: { id } });
@@ -65,7 +65,7 @@ export const updateCard = async (req: AuthRequest, res: Response) => {
 
 export const deleteCard = async (req: AuthRequest, res: Response) => {
     if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
 
     try {
       const existing = await prisma.card.findUnique({ where: { id } });

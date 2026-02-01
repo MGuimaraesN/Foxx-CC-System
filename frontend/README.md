@@ -1,20 +1,27 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Foxx-CC-System Frontend
 
-# Run and deploy your AI Studio app
+This is the React 19 frontend for the Foxx Credit Card Expense System.
 
-This contains everything you need to run your app locally.
+## Installation
 
-View your app in AI Studio: https://ai.studio/apps/drive/1z27tf-vdCY8zSsLFn4QCBqVp5NK-H6Ld
+Due to the transition of the React ecosystem to version 19, some peer dependencies (like `recharts`) may strictly require React 18 in their metadata, even though they function correctly with React 19.
 
-## Run Locally
+To install dependencies, please use the legacy peer dependency flag:
 
-**Prerequisites:**  Node.js
+```bash
+npm install --legacy-peer-deps
+```
 
+## Scripts
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+- `npm run dev`: Start the development server
+- `npm run build`: Build for production
+- `npm run preview`: Preview the production build
+
+## Environment Variables
+
+Create a `.env` file based on `.env.example`:
+
+```
+VITE_API_URL=http://localhost:3000
+```

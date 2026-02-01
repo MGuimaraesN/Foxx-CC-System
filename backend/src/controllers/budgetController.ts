@@ -70,7 +70,7 @@ export const createBudget = async (req: AuthRequest, res: Response) => {
 
 export const deleteBudget = async (req: AuthRequest, res: Response) => {
     if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
 
     try {
       const existing = await prisma.budget.findUnique({ where: { id } });
