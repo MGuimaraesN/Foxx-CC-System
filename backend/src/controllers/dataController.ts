@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { v4 as uuidv4 } from 'uuid';
 import prisma from '../prisma';
 import { AuthRequest } from '../middleware/auth';
 import { GoogleGenAI } from '@google/genai';
@@ -31,7 +32,7 @@ const processMessage = async (item: QueueItem) => {
       let extractedData: any = null;
 
       try {
-           const prompt = `Extract transaction data from this text: "${item.text}". Return JSON with keys: "description" (string), "amount" (number), "date" (ISOString, use today if missing), "status" (PAID or PENDING), "cardName" (string or null). If status is not clear, default to PENDING unless "pago" or "paid" is mentioned. Return ONLY the JSON object.`;
+           const prompt = `Extract transaction data from this text: "${item.text}". Return JSON with keys: "description" (string), "amount" (number), "date" (ISOString, use today if missing), "status" (PAID or PENDING), "cardName" (string or null), "category" (string, choose best fit from: Food, Transport, Shopping, Services, Entertainment, Health, Home, Travel, Education, or Uncategorized), "isInstallment" (boolean), "totalInstallments" (number, default 1). If "em X vezes" or "X parcelas" is mentioned, isInstallment=true and totalInstallments=X. Return ONLY the JSON object.`;
 
            const result = await ai.models.generateContent({
                model: 'gemini-2.5-flash',
@@ -48,10 +49,13 @@ const processMessage = async (item: QueueItem) => {
       }
 
       if (extractedData && extractedData.amount && extractedData.description) {
-          const amount = Math.abs(extractedData.amount); // Always positive for now, logic below handles sign
+          const amount = Math.abs(extractedData.amount);
           const description = extractedData.description;
-          const status = 'PENDING';
+          const status = extractedData.status || 'PENDING';
           const date = extractedData.date ? new Date(extractedData.date) : new Date();
+          const category = extractedData.category || 'Uncategorized';
+          const isInstallment = extractedData.isInstallment || false;
+          const totalInstallments = extractedData.totalInstallments || 1;
 
           // Find card if specified
           let cardId = null;
@@ -65,20 +69,54 @@ const processMessage = async (item: QueueItem) => {
               if (card) cardId = card.id;
           }
 
-          // Create Transaction
-          await prisma.transaction.create({
-              data: {
+          const transactionsToCreate = [];
+
+          if (isInstallment && totalInstallments > 1) {
+              const groupId = uuidv4();
+              const partAmount = Number((amount / totalInstallments).toFixed(2));
+              const totalCalculated = partAmount * totalInstallments;
+              const remainder = Number((amount - totalCalculated).toFixed(2));
+
+              for (let i = 0; i < totalInstallments; i++) {
+                  const installmentDate = new Date(date);
+                  installmentDate.setMonth(date.getMonth() + i);
+
+                  const thisAmount = (i === 0) ? partAmount + remainder : partAmount;
+                  const thisStatus = (i === 0) ? status : 'PENDING';
+
+                  transactionsToCreate.push({
+                      userId: user.id,
+                      description: description,
+                      amount: thisAmount,
+                      date: installmentDate,
+                      type: 'EXPENSE',
+                      status: thisStatus,
+                      category: category,
+                      cardId: cardId,
+                      isInstallment: true,
+                      installmentId: groupId,
+                      installmentNumber: i + 1,
+                      totalInstallments: totalInstallments
+                  });
+              }
+          } else {
+              transactionsToCreate.push({
                   userId: user.id,
                   description: description,
-                  amount: -amount, // Assume expense
+                  amount: amount,
                   date: date,
                   type: 'EXPENSE',
                   status: status,
-                  category: 'Uncategorized',
-                  cardId: cardId
-              }
-          });
-          console.log(`[WhatsApp] Transação de R$ ${amount} criada para o usuário ${user.name}`);
+                  category: category,
+                  cardId: cardId,
+                  isInstallment: false
+              });
+          }
+
+          if (transactionsToCreate.length > 0) {
+              await prisma.transaction.createMany({ data: transactionsToCreate });
+              console.log(`[WhatsApp] ${transactionsToCreate.length} transações criadas para o usuário ${user.name}`);
+          }
       } else {
           console.warn('Could not extract valid transaction data from message.');
       }

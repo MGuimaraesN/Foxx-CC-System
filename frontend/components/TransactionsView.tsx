@@ -50,6 +50,8 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
 
   const handleSyncBot = () => {
     queryClient.invalidateQueries({ queryKey: ['transactions'] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+    queryClient.invalidateQueries({ queryKey: ['budgets'] });
     toast.info('Syncing latest transactions...');
   };
 
