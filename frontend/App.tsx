@@ -64,9 +64,9 @@ const App: React.FC = () => {
     onError: () => toast.error('Failed to delete transaction'),
   });
 
-  const { data: transactions = [], isLoading: loadingTransactions, isError, error } = useTransactions();
-  const { data: stats = null, isLoading: loadingStats } = useDashboardStats();
-  const { data: cards = [], isLoading: loadingCards } = useCards();
+  const { data: transactions = [], isLoading: loadingTransactions, isError, error } = useTransactions({ enabled: isAuth });
+  const { data: stats = null, isLoading: loadingStats } = useDashboardStats({ enabled: isAuth });
+  const { data: cards = [], isLoading: loadingCards } = useCards({ enabled: isAuth });
   
   const isLoading = loadingTransactions || loadingStats || loadingCards;
 
