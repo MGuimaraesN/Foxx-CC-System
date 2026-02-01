@@ -17,6 +17,7 @@ model User {
 
   currency     String   @default("BRL")
   language     String   @default("en")
+  whatsappPhone String? @unique
   refreshToken String?
 
   cards        Card[]

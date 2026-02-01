@@ -1,7 +1,8 @@
-import React, { useRef } from 'react';
-import { Moon, Shield, Globe, Monitor, Database, Download, Upload, AlertTriangle } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { Moon, Shield, Globe, Monitor, Database, Download, Upload, AlertTriangle, MessageSquare, Bot } from 'lucide-react';
 import { generateBackup, restoreBackup, updateUserSettings } from '../services/userService';
 import { toast } from 'sonner';
+import { UserProfile } from '../types';
 
 interface SettingsViewProps {
   darkMode: boolean;
@@ -10,12 +11,14 @@ interface SettingsViewProps {
   setCurrency: (val: string) => void;
   language: string;
   setLanguage: (val: string) => void;
+  userProfile?: UserProfile;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
-  darkMode, setDarkMode, currency, setCurrency, language, setLanguage
+  darkMode, setDarkMode, currency, setCurrency, language, setLanguage, userProfile
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [whatsappPhone, setWhatsappPhone] = useState(userProfile?.whatsappPhone || '');
 
   const handleCurrencyChange = async (newCurrency: string) => {
     setCurrency(newCurrency);
@@ -27,6 +30,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     setLanguage(newLanguage);
     await updateUserSettings({ language: newLanguage });
     toast.success('Language updated');
+  };
+
+  const handleWhatsappSave = async () => {
+    if (!whatsappPhone) return;
+    await updateUserSettings({ whatsappPhone });
+    toast.success('WhatsApp number saved');
   };
 
   const handleRestore = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -66,11 +75,53 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   return (
     <div className="max-w-3xl mx-auto space-y-6 animate-in fade-in duration-500">
       
+      {/* WhatsApp Assistant */}
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
+        <div className="p-6 border-b border-slate-100 dark:border-slate-700">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+             <Bot size={20} className="text-emerald-500" /> WhatsApp Assistant
+          </h3>
+        </div>
+        <div className="p-6 space-y-6">
+           <div className="flex gap-4 flex-col md:flex-row">
+              <div className="flex-1">
+                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">WhatsApp Number</label>
+                 <div className="flex gap-2">
+                   <input
+                      type="text"
+                      placeholder="e.g. 5562999999999"
+                      value={whatsappPhone}
+                      onChange={(e) => setWhatsappPhone(e.target.value)}
+                      className="flex-1 px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:text-white"
+                   />
+                   <button
+                      onClick={handleWhatsappSave}
+                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition-colors"
+                   >
+                     Save
+                   </button>
+                 </div>
+                 <p className="text-xs text-slate-500 mt-2">Enter your number with country code (e.g., 55 for Brazil) to link your account.</p>
+              </div>
+              <div className="flex-1 p-4 bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/30 rounded-lg">
+                 <h4 className="font-semibold text-emerald-800 dark:text-emerald-400 text-sm mb-2 flex items-center gap-2">
+                    <MessageSquare size={16} /> How to use
+                 </h4>
+                 <ul className="space-y-2 text-xs text-emerald-700 dark:text-emerald-500">
+                    <li>• "Spent 50 at Bakery with Nubank"</li>
+                    <li>• "R$ 120 Uber" (Defaults to Pending/Credit)</li>
+                    <li>• "Paid 500 rent" (Marked as Paid)</li>
+                 </ul>
+              </div>
+           </div>
+        </div>
+      </div>
+
       {/* Security & Data Safeguard */}
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
         <div className="p-6 border-b border-slate-100 dark:border-slate-700">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-            <Shield size={20} className="text-emerald-500" /> Data Safeguard
+            <Shield size={20} className="text-indigo-500" /> Data Safeguard
           </h3>
         </div>
         <div className="p-6 space-y-6">

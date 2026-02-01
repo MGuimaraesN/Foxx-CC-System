@@ -15,21 +15,23 @@ let isProcessing = false;
 const processMessage = async (item: QueueItem) => {
   console.log('Processing WhatsApp message:', item.text);
 
-  // 1. Identification: In a real app, map sender -> userId.
-  // For this demo, we'll try to find the first user or a specific user.
-  // We'll assume the "sender" might match a user field if we had one,
-  // but for now let's just use the first user in DB as a fallback or mock it.
-  const user = await prisma.user.findFirst();
-  if (!user) return;
+  // 1. Identification: Search user by whatsappPhone
+  const user = await prisma.user.findFirst({
+    where: { whatsappPhone: item.sender }
+  });
+
+  if (!user) {
+    console.warn(`[WhatsApp] Ignoring message from unknown sender: ${item.sender}`);
+    return;
+  }
 
   try {
-      // 2. Extraction Strategy: Gemini 2.0 Flash (Prioritized)
-      // We are in a delayed queue, so we can afford the API call.
+      // 2. Extraction Strategy: Gemini 2.0 Flash
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       let extractedData: any = null;
 
       try {
-           const prompt = `Extract transaction data from this text: "${item.text}". Return JSON with keys: "description" (string), "amount" (number), "date" (ISOString, use today if missing), "status" (PAID or PENDING), "cardName" (string or null). If status is not clear, default to PENDING. Return ONLY the JSON object.`;
+           const prompt = `Extract transaction data from this text: "${item.text}". Return JSON with keys: "description" (string), "amount" (number), "date" (ISOString, use today if missing), "status" (PAID or PENDING), "cardName" (string or null). If status is not clear, default to PENDING unless "pago" or "paid" is mentioned. Return ONLY the JSON object.`;
 
            const result = await ai.models.generateContent({
                model: 'gemini-2.0-flash',
@@ -48,17 +50,16 @@ const processMessage = async (item: QueueItem) => {
       if (extractedData && extractedData.amount && extractedData.description) {
           const amount = Math.abs(extractedData.amount); // Always positive for now, logic below handles sign
           const description = extractedData.description;
-          const status = extractedData.status === 'PAID' ? 'PAID' : 'PENDING'; // Default PENDING
+          const status = extractedData.status === 'PAID' ? 'PAID' : 'PENDING';
           const date = extractedData.date ? new Date(extractedData.date) : new Date();
 
           // Find card if specified
           let cardId = null;
           if (extractedData.cardName) {
-              // Search for card matching the name (case-insensitive usually by DB, but contains is good)
               const card = await prisma.card.findFirst({
                   where: {
                       userId: user.id,
-                      name: { contains: extractedData.cardName } // e.g. "Nubank"
+                      name: { contains: extractedData.cardName }
                   }
               });
               if (card) cardId = card.id;
@@ -69,7 +70,7 @@ const processMessage = async (item: QueueItem) => {
               data: {
                   userId: user.id,
                   description: description,
-                  amount: -amount, // Assume expense for now from WhatsApp
+                  amount: -amount, // Assume expense
                   date: date,
                   type: 'EXPENSE',
                   status: status,
@@ -77,7 +78,7 @@ const processMessage = async (item: QueueItem) => {
                   cardId: cardId
               }
           });
-          console.log('Transaction created via WhatsApp:', description, amount);
+          console.log(`[WhatsApp] Transação de R$ ${amount} criada para o usuário ${user.name}`);
       } else {
           console.warn('Could not extract valid transaction data from message.');
       }

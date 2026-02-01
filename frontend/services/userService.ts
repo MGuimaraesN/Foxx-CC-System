@@ -51,7 +51,7 @@ export const updateUserProfile = (profile: UserProfile, newPassword?: string) =>
     console.warn("Update profile not implemented in backend yet");
 };
 
-export const updateUserSettings = async (settings: { currency?: string, language?: string }): Promise<UserProfile | null> => {
+export const updateUserSettings = async (settings: { currency?: string, language?: string, whatsappPhone?: string }): Promise<UserProfile | null> => {
   try {
     const response = await api.patch('/auth/settings', settings);
 

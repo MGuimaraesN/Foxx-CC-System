@@ -19,6 +19,7 @@ const loginSchema = z.object({
 const settingsSchema = z.object({
   currency: z.string().optional(),
   language: z.string().optional(),
+  whatsappPhone: z.string().optional(),
 });
 
 export const register = async (req: Request, res: Response) => {
@@ -48,7 +49,8 @@ export const register = async (req: Request, res: Response) => {
         email: user.email,
         avatarUrl: user.avatarUrl,
         currency: user.currency,
-        language: user.language
+        language: user.language,
+        whatsappPhone: user.whatsappPhone
       }
     });
   } catch (error) {
@@ -89,7 +91,8 @@ export const login = async (req: Request, res: Response) => {
         email: user.email,
         avatarUrl: user.avatarUrl,
         currency: user.currency,
-        language: user.language
+        language: user.language,
+        whatsappPhone: user.whatsappPhone
       }
     });
   } catch (error) {
@@ -130,7 +133,8 @@ export const me = async (req: AuthRequest, res: Response) => {
     email: user.email,
     avatarUrl: user.avatarUrl,
     currency: user.currency,
-    language: user.language
+    language: user.language,
+    whatsappPhone: user.whatsappPhone
   });
 };
 
@@ -141,13 +145,14 @@ export const updateSettings = async (req: AuthRequest, res: Response) => {
   }
 
   try {
-    const { currency, language } = settingsSchema.parse(req.body);
+    const { currency, language, whatsappPhone } = settingsSchema.parse(req.body);
 
     const user = await prisma.user.update({
       where: { id: req.user.id },
       data: {
         ...(currency && { currency }),
         ...(language && { language }),
+        ...(whatsappPhone && { whatsappPhone }),
       },
     });
 
@@ -158,6 +163,7 @@ export const updateSettings = async (req: AuthRequest, res: Response) => {
       avatarUrl: user.avatarUrl,
       currency: user.currency,
       language: user.language,
+      whatsappPhone: user.whatsappPhone,
     });
   } catch (error) {
     console.error(error);

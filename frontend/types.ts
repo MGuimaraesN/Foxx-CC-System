@@ -121,5 +121,6 @@ export interface UserProfile {
   avatarUrl: string;
   currency?: string;
   language?: string;
+  whatsappPhone?: string;
   passwordHash?: string; // Stored locally
 }

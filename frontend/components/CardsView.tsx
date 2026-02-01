@@ -9,9 +9,10 @@ interface CardsViewProps {
   loading: boolean;
   onSuccess?: () => void;
   transactions?: Transaction[];
+  isPrivate?: boolean;
 }
 
-export const CardsView: React.FC<CardsViewProps> = ({ cards, loading, onSuccess, transactions = [] }) => {
+export const CardsView: React.FC<CardsViewProps> = ({ cards, loading, onSuccess, transactions = [], isPrivate = false }) => {
   const [showCardModal, setShowCardModal] = useState(false);
   const [editingCard, setEditingCard] = useState<CreditCard | null>(null);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
@@ -121,7 +122,7 @@ export const CardsView: React.FC<CardsViewProps> = ({ cards, loading, onSuccess,
               <div className="flex justify-between items-end">
                 <div>
                   <p className="text-xs opacity-75 mb-1">Total Limit</p>
-                  <p className="font-semibold">{formatCurrency(card.limit)}</p>
+                  <p className="font-semibold">{isPrivate ? 'R$ ••••' : formatCurrency(card.limit)}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-xs opacity-75 mb-1">Closing Day</p>
@@ -193,7 +194,7 @@ export const CardsView: React.FC<CardsViewProps> = ({ cards, loading, onSuccess,
                                     {new Date(item.month + '-02').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
                                 </span>
                                 <span className="font-bold text-slate-900 dark:text-white text-sm">
-                                    {formatCurrency(item.amount)}
+                                    {isPrivate ? 'R$ ••••' : formatCurrency(item.amount)}
                                 </span>
                             </div>
                         ))

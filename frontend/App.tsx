@@ -168,7 +168,7 @@ const App: React.FC = () => {
         );
       case 'cards':
         return (
-          <CardsView cards={cards} loading={isLoading} transactions={transactions} />
+          <CardsView cards={cards} loading={isLoading} transactions={transactions} isPrivate={isPrivate} />
         );
       case 'budgets':
         return (
@@ -195,6 +195,7 @@ const App: React.FC = () => {
             setCurrency={setCurrency}
             language={language}
             setLanguage={setLanguage}
+            userProfile={userProfile}
           />
         );
       case 'user':

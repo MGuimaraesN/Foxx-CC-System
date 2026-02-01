@@ -1,10 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { TransactionTable } from './TransactionTable';
 import { Transaction, CreditCard, TransactionType, TransactionStatus } from '../types';
-import { Search, Filter, AlertCircle, Calendar, Tag as TagIcon, Check, ArrowUpCircle, ArrowDownCircle, Wallet, FileText, Sheet, Download } from 'lucide-react';
+import { Search, Filter, AlertCircle, Calendar, Tag as TagIcon, Check, ArrowUpCircle, ArrowDownCircle, Wallet, FileText, Sheet, Download, RefreshCw } from 'lucide-react';
 import { TransactionForm } from './TransactionForm';
 import { useUpdateTransaction } from '../hooks/useTransactions';
 import { exportToPDF, exportToExcel } from '../services/exportService';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 interface TransactionsViewProps {
   transactions: Transaction[];
@@ -30,6 +32,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
   
   // Edit State
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const queryClient = useQueryClient();
 
   const updateMutation = useUpdateTransaction({
     onSuccess: () => {
@@ -43,6 +46,11 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
   const handleStatusToggle = (t: Transaction) => {
     const newStatus = t.status === TransactionStatus.PAID ? TransactionStatus.PENDING : TransactionStatus.PAID;
     updateMutation.mutate({ id: t.id, status: newStatus });
+  };
+
+  const handleSyncBot = () => {
+    queryClient.invalidateQueries({ queryKey: ['transactions'] });
+    toast.info('Syncing latest transactions...');
   };
 
   // Derive unique tags from transactions
@@ -178,19 +186,29 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
         
         {/* Row 1: Search, Export buttons, and Type/Card */}
         <div className="flex flex-col xl:flex-row gap-4 justify-between">
-          <div className="relative w-full xl:w-1/3">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-            <input 
-              type="text" 
-              placeholder="Search description..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-all"
-            />
+          <div className="flex items-center gap-2 w-full xl:w-1/3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input
+                type="text"
+                placeholder="Search description..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-all"
+              />
+            </div>
           </div>
           
           <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto">
-             
+
+            <button
+                onClick={handleSyncBot}
+                className="flex items-center gap-2 px-3 py-2 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400 rounded-lg text-sm font-medium hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors mr-2"
+            >
+               <RefreshCw size={16} />
+               <span className="hidden sm:inline">Sync Bot</span>
+            </button>
+
             {/* Export Buttons */}
             <div className="flex items-center gap-2 mr-2">
               <button 

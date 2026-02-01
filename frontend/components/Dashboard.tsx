@@ -50,7 +50,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
   const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
   const currentSpent = stats?.financialHealth?.currentMonthTotal || 0;
   // Simple linear projection
-  const projected = (currentSpent / currentDay) * daysInMonth;
+  const projected = (currentSpent / currentDay) * 30;
   const avg = stats?.financialHealth?.averageLast3Months || 0;
   const pacePercentage = Math.min(100, (currentDay / daysInMonth) * 100);
 
