@@ -49,7 +49,6 @@ const App: React.FC = () => {
     const authStatus = isAuthenticated();
     setIsAuth(authStatus);
     if (!authStatus && window.location.pathname !== '/' && window.location.pathname !== '/login') {
-       // Simple hash routing protection or state reset
        setCurrentView('dashboard');
     }
   }, []);
@@ -65,19 +64,23 @@ const App: React.FC = () => {
     }
   }, [isAuth]);
 
-  // Data State via React Query Hooks (only enabled if auth)
+  // Data State via React Query Hooks
   const deleteMutation = useDeleteTransaction({
     onSuccess: () => toast.success('Transaction deleted successfully'),
     onError: () => toast.error('Failed to delete transaction'),
   });
 
-  const { data: transactions = [], isLoading: loadingTransactions, isError, error } = useTransactions({ enabled: isAuth });
+  const { data: transactionsData = [], isLoading: loadingTransactions, isError, error } = useTransactions({ enabled: isAuth });
   const { data: stats = null, isLoading: loadingStats } = useDashboardStats({ enabled: isAuth });
-  const { data: cards = [], isLoading: loadingCards } = useCards({ enabled: isAuth });
+  const { data: cardsData = [], isLoading: loadingCards } = useCards({ enabled: isAuth });
   
+  // CORREÇÃO: Garantir que transactions e cards sejam sempre arrays, mesmo se a API retornar erro/null
+  const transactions = useMemo(() => Array.isArray(transactionsData) ? transactionsData : [], [transactionsData]);
+  const cards = useMemo(() => Array.isArray(cardsData) ? cardsData : [], [cardsData]);
+
   const isLoading = loadingTransactions || loadingStats || loadingCards;
 
-  // Calculate unique tags for autocomplete
+  // Calculate unique tags for autocomplete - Agora seguro com a garantia de array acima
   const availableTags = useMemo(() => {
     const tags = new Set<string>();
     transactions.forEach(t => t.tags?.forEach(tag => tags.add(tag)));
@@ -87,7 +90,7 @@ const App: React.FC = () => {
   // Global Error Handler for Query
   useEffect(() => {
     if (isError && error && isAuth) {
-      // toast.error(error.message || 'Failed to fetch data'); // Optional: quiet fail or explicit
+      // Opcional: toast.error('Erro ao carregar dados');
     }
   }, [isError, error, isAuth]);
 
@@ -153,7 +156,7 @@ const App: React.FC = () => {
             cards={cards} 
             onDelete={handleDelete}
             isDeleting={deleteMutation.isPending}
-            error={isError ? error : null}
+            error={isError ? (error as Error) : null}
             showToast={(msg, type) => type === 'success' ? toast.success(msg) : toast.error(msg)}
             currency={currency}
           />
@@ -207,7 +210,6 @@ const App: React.FC = () => {
     }
   };
 
-  // Login View Wrapper
   if (!isAuth) {
     return (
         <div className="text-slate-900 dark:text-slate-100 dark:bg-slate-950 transition-colors duration-200 h-screen w-screen">
