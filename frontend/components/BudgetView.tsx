@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchBudgets, createBudget, deleteBudget } from '../services/transactionService';
 import { BudgetUsage } from '../types';
@@ -11,10 +11,13 @@ export const BudgetView: React.FC = () => {
   const [newCategory, setNewCategory] = useState('');
   const [newAmount, setNewAmount] = useState('');
 
-  const { data: budgets, isLoading } = useQuery({
+  const { data: budgetsData, isLoading } = useQuery({
     queryKey: ['budgets'],
     queryFn: fetchBudgets,
   });
+
+  // CORREÇÃO: Garante que budgets seja sempre um array para evitar erros de .map()
+  const budgets = useMemo(() => Array.isArray(budgetsData) ? budgetsData : [], [budgetsData]);
 
   const createMutation = useMutation({
     mutationFn: createBudget,
@@ -100,13 +103,13 @@ export const BudgetView: React.FC = () => {
        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
          {isLoading ? (
             [1,2,3,4].map(i => <Skeleton key={i} className="h-32 rounded-xl" />)
-         ) : budgets?.length === 0 ? (
+         ) : budgets.length === 0 ? (
             <div className="col-span-full text-center py-12 text-slate-400 bg-white dark:bg-slate-800 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
                <TrendingUp className="mx-auto mb-2 opacity-50" size={32} />
                <p>No budgets set yet. Create one to track your spending.</p>
             </div>
          ) : (
-            budgets?.map((budget) => {
+            budgets.map((budget) => {
               const isOver = budget.spent > budget.amount;
               const color = isOver ? 'bg-red-500' : (budget.percentage > 80 ? 'bg-orange-500' : 'bg-emerald-500');
               const statusColor = isOver ? 'text-red-600 dark:text-red-400' : (budget.percentage > 80 ? 'text-orange-600 dark:text-orange-400' : 'text-emerald-600 dark:text-emerald-400');
