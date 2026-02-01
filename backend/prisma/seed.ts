@@ -79,7 +79,7 @@ async function main() {
   await prisma.transaction.create({
     data: {
       userId: user.id,
-      cardId: card2.id,
+      cardId: card2.id, // XP Visa
       description: 'AWS Infrastructure',
       amount: 602.50,
       date: new Date(),
