@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { X, Calendar, DollarSign, Tag, CreditCard as CardIcon, Repeat, ArrowUpCircle, ArrowDownCircle, Plus, CalendarOff, Layers } from 'lucide-react';
+import { X, Calendar, DollarSign, Tag, CreditCard as CardIcon, Repeat, ArrowUpCircle, ArrowDownCircle, Plus, CalendarOff, Layers, Upload } from 'lucide-react';
 import { TransactionType, Currency, CreditCard, Transaction, RecurrenceFrequency, TransactionStatus } from '../types';
 import { useCreateTransaction, useUpdateTransaction } from '../hooks/useTransactions';
 
@@ -29,6 +29,7 @@ const transactionSchema = z.object({
   isInstallment: z.boolean(),
   totalInstallments: z.number().min(1).max(24).optional(),
   installmentNumber: z.number().min(1).optional(),
+  receiptUrl: z.string().optional(),
 });
 
 type TransactionFormData = z.infer<typeof transactionSchema>;
@@ -36,6 +37,7 @@ type TransactionFormData = z.infer<typeof transactionSchema>;
 export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSuccess, cards, initialData, availableTags = [] }) => {
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
 
   // React Query Mutations
   const createMutation = useCreateTransaction();
@@ -80,8 +82,10 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSuc
         isInstallment: initialData.isInstallment,
         totalInstallments: initialData.totalInstallments || 1,
         installmentNumber: initialData.installmentNumber || 1,
+        receiptUrl: initialData.receiptUrl,
       });
       setTags(initialData.tags || []);
+      setReceiptPreview(initialData.receiptUrl || null);
     }
   }, [initialData, reset]);
 
@@ -109,6 +113,19 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSuc
 
   const removeTag = (tagToRemove: string) => {
     setTags(tags.filter(t => t !== tagToRemove));
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        setReceiptPreview(base64);
+        setValue('receiptUrl', base64);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const onSubmit = async (data: TransactionFormData) => {
@@ -368,6 +385,27 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSuc
                   )}
               </div>
             )}
+          </div>
+
+          {/* Receipt Upload */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Receipt / Attachment</label>
+            <div className="flex items-center gap-4">
+               {receiptPreview ? (
+                 <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 group">
+                    <img src={receiptPreview} alt="Receipt" className="w-full h-full object-cover" />
+                    <button type="button" onClick={() => { setReceiptPreview(null); setValue('receiptUrl', ''); }} className="absolute inset-0 bg-black/50 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                      <X size={16} />
+                    </button>
+                 </div>
+               ) : (
+                 <label className="w-16 h-16 flex flex-col items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-lg cursor-pointer hover:border-indigo-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                    <Upload size={20} className="text-slate-400" />
+                    <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                 </label>
+               )}
+               <span className="text-xs text-slate-500">Optional. Image only.</span>
+            </div>
           </div>
 
           <div className="pt-4">

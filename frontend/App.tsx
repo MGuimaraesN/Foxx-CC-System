@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { LayoutDashboard, Receipt, CreditCard, Settings, Plus, Sun, Moon, LogOut, X, Newspaper, PieChart, Upload, Menu } from 'lucide-react';
+import { LayoutDashboard, Receipt, CreditCard, Settings, Plus, Sun, Moon, LogOut, X, Newspaper, PieChart, Upload, Menu, Target } from 'lucide-react';
 import { Dashboard } from './components/Dashboard';
 import { TransactionTable } from './components/TransactionTable';
 import { TransactionForm } from './components/TransactionForm';
@@ -8,6 +8,7 @@ import { SettingsView } from './components/SettingsView';
 import { TransactionsView } from './components/TransactionsView';
 import { NewsView } from './components/NewsView';
 import { BudgetView } from './components/BudgetView';
+import { GoalsView } from './components/GoalsView';
 import { ImportView } from './components/ImportView';
 import { LoginView } from './components/LoginView';
 import { UserManagementView } from './components/UserManagementView';
@@ -16,7 +17,7 @@ import { isAuthenticated, logout, getUserProfile } from './services/userService'
 import { Toaster, toast } from 'sonner';
 import { UserProfile } from './types';
 
-type ViewState = 'dashboard' | 'transactions' | 'cards' | 'budgets' | 'news' | 'import' | 'settings' | 'user';
+type ViewState = 'dashboard' | 'transactions' | 'cards' | 'budgets' | 'goals' | 'news' | 'import' | 'settings' | 'user';
 
 // Sidebar Item Component
 const NavItem: React.FC<{ 
@@ -170,6 +171,10 @@ const App: React.FC = () => {
         return (
           <BudgetView />
         );
+      case 'goals':
+        return (
+          <GoalsView />
+        );
       case 'news':
         return (
           <NewsView />
@@ -204,6 +209,7 @@ const App: React.FC = () => {
       case 'transactions': return 'All Transactions';
       case 'cards': return 'My Cards';
       case 'budgets': return 'Budget Management';
+      case 'goals': return 'Savings Goals';
       case 'news': return 'Market News';
       case 'import': return 'Import Data';
       case 'settings': return 'System Settings';
@@ -261,6 +267,12 @@ const App: React.FC = () => {
             active={currentView === 'budgets'} 
             icon={<PieChart size={20} />} 
             label="Budgets" 
+          />
+          <NavItem
+            onClick={() => handleNavClick('goals')}
+            active={currentView === 'goals'}
+            icon={<Target size={20} />}
+            label="Goals"
           />
           <NavItem 
             onClick={() => handleNavClick('news')} 

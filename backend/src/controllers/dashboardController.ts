@@ -20,16 +20,32 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
     });
     const totalLimit = totalLimitAgg._sum.limit || 0;
 
-    // Open Invoice (All Pending Expenses)
-    const openInvoiceAgg = await prisma.transaction.aggregate({
-        _sum: { amount: true },
+    // Open Invoice (All Pending Expenses) - Filtered by Closing Day
+    const pendingExpenses = await prisma.transaction.findMany({
         where: {
             userId,
             type: 'EXPENSE',
-            status: 'PENDING'
-        }
+            status: 'PENDING',
+            deletedAt: null
+        },
+        include: { card: true }
     });
-    const openInvoice = openInvoiceAgg._sum.amount || 0;
+
+    let openInvoice = 0;
+
+    for (const t of pendingExpenses) {
+        if (t.card) {
+            const closingDay = t.card.closingDay;
+            const txDate = new Date(t.date);
+
+            // If transaction date is after closing day, it belongs to next invoice
+            if (txDate.getDate() > closingDay) {
+                // Next invoice, skip from open invoice of current cycle
+                continue;
+            }
+        }
+        openInvoice += t.amount;
+    }
 
     // Closed Invoice (Paid Expenses this month)
     const closedInvoiceAgg = await prisma.transaction.aggregate({
@@ -38,6 +54,7 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
             userId,
             type: 'EXPENSE',
             status: 'PAID',
+            deletedAt: null,
             date: {
                 gte: startOfMonth,
                 lte: endOfMonth
@@ -55,6 +72,7 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
             userId,
             type: 'EXPENSE',
             status: 'PENDING',
+            deletedAt: null,
             date: {
                 gte: now,
                 lte: sevenDaysFromNow
@@ -69,6 +87,7 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
         where: {
             userId,
             type: 'EXPENSE',
+            deletedAt: null,
             date: {
                 gte: startOfMonth,
                 lte: endOfMonth
@@ -93,6 +112,7 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
             where: {
                 userId,
                 type: 'EXPENSE',
+                deletedAt: null,
                 date: {
                     gte: start,
                     lte: end
@@ -139,6 +159,7 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
             where: {
                 userId,
                 type: 'EXPENSE',
+                deletedAt: null,
                 date: {
                     gte: start,
                     lte: end

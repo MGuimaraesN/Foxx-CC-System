@@ -1,6 +1,6 @@
 import React from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Line, ComposedChart, Bar } from 'recharts';
-import { CreditCard, TrendingUp, TrendingDown, AlertCircle, HeartPulse, Clock } from 'lucide-react';
+import { CreditCard, TrendingUp, TrendingDown, AlertCircle, HeartPulse, Clock, Activity } from 'lucide-react';
 import { DashboardStats } from '../types';
 import { Skeleton } from './ui/Skeleton';
 
@@ -39,6 +39,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
   }
 
   const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency }).format(val);
+
+  // Forecast Logic
+  const now = new Date();
+  const currentDay = Math.max(1, now.getDate());
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const currentSpent = stats?.financialHealth?.currentMonthTotal || 0;
+  // Simple linear projection
+  const projected = (currentSpent / currentDay) * daysInMonth;
+  const avg = stats?.financialHealth?.averageLast3Months || 0;
+  const pacePercentage = Math.min(100, (currentDay / daysInMonth) * 100);
 
   return (
     <div className="space-y-6">
@@ -96,46 +106,98 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
         />
       </div>
 
-      <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 h-[400px] flex flex-col relative">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Expense vs Average</h3>
-          <div className="flex items-center gap-4 text-xs text-slate-500">
-            <div className="flex items-center gap-1"><div className="w-3 h-3 bg-indigo-500 rounded-full"></div> Monthly Expense</div>
-            <div className="flex items-center gap-1"><div className="w-3 h-3 bg-emerald-400 rounded-full"></div> 3-Mo Average</div>
-          </div>
-        </div>
-        
-        {isLoading ? (
-          <Skeleton className="w-full h-full" />
-        ) : (
-          <div className="flex-1 w-full min-h-0 relative">
-            <div className="absolute inset-0">
-              <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={stats?.monthlyTrend} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" className="dark:stroke-slate-700" />
-                  <XAxis 
-                    dataKey="month" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fill: '#64748b' }} 
-                    dy={10}
-                  />
-                  <YAxis 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fill: '#64748b' }} 
-                    tickFormatter={(value) => `R$${value/1000}k`}
-                  />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
-                  />
-                  <Bar dataKey="amount" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={40} />
-                  <Line type="monotone" dataKey="average" stroke="#34d399" strokeWidth={2} dot={false} strokeDasharray="5 5" />
-                </ComposedChart>
-              </ResponsiveContainer>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 h-[400px] flex flex-col relative">
+            <div className="flex justify-between items-center mb-6">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Expense vs Average</h3>
+            <div className="flex items-center gap-4 text-xs text-slate-500">
+                <div className="flex items-center gap-1"><div className="w-3 h-3 bg-indigo-500 rounded-full"></div> Monthly Expense</div>
+                <div className="flex items-center gap-1"><div className="w-3 h-3 bg-emerald-400 rounded-full"></div> 3-Mo Average</div>
             </div>
-          </div>
-        )}
+            </div>
+
+            {isLoading ? (
+            <Skeleton className="w-full h-full" />
+            ) : (
+            <div className="flex-1 w-full min-h-0 relative">
+                <div className="absolute inset-0">
+                <ResponsiveContainer width="100%" height="100%">
+                    <ComposedChart data={stats?.monthlyTrend} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" className="dark:stroke-slate-700" />
+                    <XAxis
+                        dataKey="month"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: '#64748b' }}
+                        dy={10}
+                    />
+                    <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: '#64748b' }}
+                        tickFormatter={(value) => `R$${value/1000}k`}
+                    />
+                    <Tooltip
+                        contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
+                    />
+                    <Bar dataKey="amount" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={40} />
+                    <Line type="monotone" dataKey="average" stroke="#34d399" strokeWidth={2} dot={false} strokeDasharray="5 5" />
+                    </ComposedChart>
+                </ResponsiveContainer>
+                </div>
+            </div>
+            )}
+        </div>
+
+        {/* Forecast Widget */}
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-center">
+            <div className="flex items-center gap-3 mb-6">
+                <div className="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg text-indigo-600 dark:text-indigo-400">
+                    <Activity size={24} />
+                </div>
+                <div>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Spending Forecast</h3>
+                    <p className="text-xs text-slate-500">Based on current pace</p>
+                </div>
+            </div>
+
+            <div className="space-y-6">
+                <div>
+                    <p className="text-sm text-slate-500 mb-1">Projected Month Total</p>
+                    <p className="text-3xl font-bold text-slate-900 dark:text-white">{formatCurrency(projected)}</p>
+                </div>
+
+                <div className="flex justify-between items-end">
+                    <div>
+                        <p className="text-sm text-slate-500">vs 3-Month Average</p>
+                        <p className="font-medium text-slate-900 dark:text-white">{formatCurrency(avg)}</p>
+                    </div>
+                    <div className={`text-right font-bold ${projected > avg ? 'text-red-500' : 'text-emerald-500'}`}>
+                        {projected > avg ? '+' : ''}{avg > 0 ? ((projected - avg) / avg * 100).toFixed(1) : '0.0'}%
+                    </div>
+                </div>
+
+                <div>
+                    <div className="flex justify-between text-xs text-slate-500 mb-2">
+                        <span>Month Progress</span>
+                        <span>{pacePercentage.toFixed(0)}%</span>
+                    </div>
+                    <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-3 overflow-hidden">
+                        <div
+                            className="bg-indigo-600 h-full rounded-full transition-all duration-1000"
+                            style={{ width: `${pacePercentage}%` }}
+                        ></div>
+                    </div>
+                </div>
+
+                <div className="p-4 bg-slate-50 dark:bg-slate-700/30 rounded-lg border border-slate-100 dark:border-slate-700/50">
+                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                        At your current daily spending of <strong>{formatCurrency(currentSpent / currentDay)}</strong>,
+                        you are on track to {projected > avg ? 'exceed' : 'stay under'} your 3-month average.
+                    </p>
+                </div>
+            </div>
+        </div>
       </div>
     </div>
   );

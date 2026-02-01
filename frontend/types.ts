@@ -64,6 +64,17 @@ export interface Transaction {
   isRecurring: boolean;
   recurrenceFrequency?: RecurrenceFrequency;
   recurrenceEndDate?: string;
+
+  deletedAt?: string;
+  receiptUrl?: string;
+}
+
+export interface Goal {
+  id: string;
+  name: string;
+  targetAmount: number;
+  currentAmount: number;
+  deadline?: string; // ISO String
 }
 
 export interface Budget {

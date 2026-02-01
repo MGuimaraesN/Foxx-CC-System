@@ -3,6 +3,7 @@ import { z } from 'zod';
 import prisma from '../prisma';
 import { AuthRequest } from '../middleware/auth';
 import { v4 as uuidv4 } from 'uuid';
+import { GoogleGenAI } from '@google/genai';
 
 const transactionSchema = z.object({
   description: z.string(),
@@ -28,20 +29,16 @@ export const getTransactions = async (req: AuthRequest, res: Response) => {
 
   try {
     const transactions = await prisma.transaction.findMany({
-      where: { userId: req.user.id },
+      where: { userId: req.user.id, deletedAt: null },
       orderBy: { date: 'desc' },
-      include: { card: true } // Include card details if needed
+      include: { card: true }
     });
 
-    // Convert tags string back to array for frontend compatibility if needed,
-    // or frontend expects string?
-    // Types.ts says `tags: string[]`. Schema says `tags: String?`.
-    // I should convert.
     const formatted = transactions.map(t => ({
       ...t,
       tags: t.tags ? t.tags.split(',') : [],
       date: t.date.toISOString(),
-      createdAt: undefined // Hide internal fields if necessary
+      createdAt: undefined
     }));
 
     res.json(formatted);
@@ -57,12 +54,11 @@ export const createTransaction = async (req: AuthRequest, res: Response) => {
     const data = transactionSchema.parse(req.body);
     const userId = req.user.id;
     const baseDate = new Date(data.date);
-    const groupId = uuidv4(); // Generate a common ID for grouped transactions
+    const groupId = uuidv4();
 
     const transactionsToCreate: any[] = [];
     const tagsStr = data.tags ? data.tags.join(',') : null;
 
-    // Installment Logic
     if (data.isInstallment && data.totalInstallments && data.totalInstallments > 1 && data.type === 'EXPENSE') {
       const totalAmount = data.amount;
       const partAmount = Number((totalAmount / data.totalInstallments).toFixed(2));
@@ -77,11 +73,7 @@ export const createTransaction = async (req: AuthRequest, res: Response) => {
         const installmentDate = new Date(baseDate);
         installmentDate.setMonth(baseDate.getMonth() + i);
 
-        // Add remainder to first installment
         const amount = (thisInstallmentNum === 1) ? partAmount + remainder : partAmount;
-
-        // Status: First one takes provided status, others usually PENDING?
-        // Logic from frontend: `status: i === 0 ? defaultStatus : TransactionStatus.PENDING`
         const status = (i === 0) ? data.status : 'PENDING';
 
         transactionsToCreate.push({
@@ -102,16 +94,9 @@ export const createTransaction = async (req: AuthRequest, res: Response) => {
         });
       }
     }
-    // Recurring Logic
     else if (data.isRecurring) {
-      const recurrenceCount = 6; // Default to 6 months if not specified/endless logic not fully implemented
-      // Or use recurrenceEndDate if present
+      const recurrenceCount = 6;
       let count = recurrenceCount;
-      if (data.recurrenceEndDate) {
-          // Calculate months between
-          // For simplicity, stick to fixed count or date check.
-          // Frontend logic: `if (data.recurrenceEndDate && recurringDate > new Date(data.recurrenceEndDate)) break;`
-      }
 
       for (let i = 0; i < count; i++) {
         const recurringDate = new Date(baseDate);
@@ -140,7 +125,6 @@ export const createTransaction = async (req: AuthRequest, res: Response) => {
         });
       }
     }
-    // Single Transaction
     else {
       transactionsToCreate.push({
         userId,
@@ -156,14 +140,6 @@ export const createTransaction = async (req: AuthRequest, res: Response) => {
         isRecurring: false
       });
     }
-
-    // Batch create
-    // SQLite doesn't support createMany nicely with limitations in some versions, but Prisma supports it.
-    // However, createMany doesn't return created records in some DBs.
-    // We can use $transaction with create.
-
-    // For simplicity with SQLite/Prisma, let's use a loop or createMany if supported.
-    // Prisma createMany is supported for SQLite.
 
     await prisma.transaction.createMany({
       data: transactionsToCreate
@@ -182,13 +158,16 @@ export const deleteTransaction = async (req: AuthRequest, res: Response) => {
     const { id } = req.params as { id: string };
 
     try {
-        // Verify ownership
         const tx = await prisma.transaction.findUnique({ where: { id } });
         if (!tx || tx.userId !== req.user.id) {
             return res.status(404).json({ error: 'Transaction not found' });
         }
 
-        await prisma.transaction.delete({ where: { id } });
+        // Soft delete
+        await prisma.transaction.update({
+            where: { id },
+            data: { deletedAt: new Date() }
+        });
         res.json({ message: 'Deleted' });
     } catch (error) {
         res.status(500).json({ error: 'Failed to delete' });
@@ -205,16 +184,13 @@ export const updateTransaction = async (req: AuthRequest, res: Response) => {
             return res.status(404).json({ error: 'Transaction not found' });
         }
 
-        // Just basic update for now, complicated if editing installment logic
         const data = req.body;
-        // Map body to prisma fields
         const updateData: any = { ...data };
         if (data.tags && Array.isArray(data.tags)) {
             updateData.tags = data.tags.join(',');
         }
         if (data.date) updateData.date = new Date(data.date);
 
-        // Remove fields that shouldn't be updated loosely or map them carefully
         delete updateData.id;
         delete updateData.userId;
         delete updateData.createdAt;
@@ -231,5 +207,70 @@ export const updateTransaction = async (req: AuthRequest, res: Response) => {
 
     } catch (error) {
         res.status(500).json({ error: 'Failed to update' });
+    }
+};
+
+export const createBulkTransactions = async (req: AuthRequest, res: Response) => {
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+
+    try {
+        const transactions = req.body;
+        if (!Array.isArray(transactions)) {
+            return res.status(400).json({ error: 'Expected array of transactions' });
+        }
+
+        // Initialize Gemini
+        let ai: GoogleGenAI | null = null;
+        try {
+            ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        } catch (e) {
+            console.warn('Gemini init failed', e);
+        }
+
+        const processed = await Promise.all(transactions.map(async (t: any) => {
+            if (!t.description || t.amount === undefined || !t.date) return null;
+
+            let category = t.category;
+
+            // AI Categorization if missing or Uncategorized
+            if (ai && (!category || category === 'Uncategorized') && t.description) {
+                try {
+                     const prompt = `Categorize this transaction description into a single word category (e.g. Food, Transport, Shopping, Services, Entertainment, Health, Home, Travel, Education). Description: "${t.description}". Return ONLY the category name.`;
+                     const result = await ai.models.generateContent({
+                        model: 'gemini-2.0-flash',
+                        contents: [{ parts: [{ text: prompt }] }]
+                     });
+
+                     const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                     if (text) category = text.trim();
+                } catch (e) {
+                    // Fail silently, keep Uncategorized
+                }
+            }
+
+            return {
+                userId: req.user!.id,
+                description: t.description,
+                amount: Number(t.amount),
+                date: new Date(t.date),
+                type: t.type || (t.amount < 0 ? 'EXPENSE' : 'INCOME'),
+                status: t.status || 'PAID',
+                category: category || 'Uncategorized',
+                tags: Array.isArray(t.tags) ? t.tags.join(',') : (t.tags || null),
+                cardId: t.cardId || null,
+                isInstallment: false,
+                isRecurring: false
+            };
+        }));
+
+        const valid = processed.filter(t => t !== null);
+        if (valid.length > 0) {
+            await prisma.transaction.createMany({ data: valid });
+        }
+
+        res.json({ count: valid.length });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to bulk create' });
     }
 };

@@ -11,11 +11,12 @@ export const getUSDRate = async (): Promise<number> => {
 // --- TRANSACTION LOGIC ---
 export const createTransaction = async (data: Partial<Transaction>): Promise<Transaction[]> => {
   const response = await api.post('/transactions', data);
-  // Backend returns { message, count }, but frontend hook expects Transaction[]
-  // We might need to fetch fresh transactions or return a dummy array to satisfy interface
-  // Ideally, useMutation invalidates queries, so return value here is less critical if hooks are set up right.
-  // But let's return [] to be safe or type cast.
   return [];
+};
+
+export const createBulkTransactions = async (data: Partial<Transaction>[]): Promise<number> => {
+  const response = await api.post('/transactions/bulk', data);
+  return response.data.count;
 };
 
 export const updateTransaction = async (data: Partial<Transaction>): Promise<Transaction> => {
@@ -106,7 +107,7 @@ export const parseOFX = (ofxContent: string): any[] => {
 
 export const importTransactionsFromCSV = async (csvText: string): Promise<number> => {
   const lines = csvText.split('\n');
-  let successCount = 0;
+  const transactions: Partial<Transaction>[] = [];
 
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();
@@ -121,7 +122,7 @@ export const importTransactionsFromCSV = async (csvText: string): Promise<number
 
       if (!isNaN(amount) && desc) {
         const type = amount < 0 ? 'EXPENSE' : 'INCOME';
-        await createTransaction({
+        transactions.push({
           description: desc,
           amount: Math.abs(amount),
           date: new Date(date).toISOString(),
@@ -132,19 +133,19 @@ export const importTransactionsFromCSV = async (csvText: string): Promise<number
           isRecurring: false,
           isInstallment: false
         });
-        successCount++;
       }
     }
   }
-  return successCount;
+
+  if (transactions.length > 0) {
+      return await createBulkTransactions(transactions);
+  }
+  return 0;
 };
 
 export const importTransactionsFromOFX = async (ofxText: string): Promise<number> => {
   const parsed = parseOFX(ofxText);
-  let successCount = 0;
-
-  for (const t of parsed) {
-    await createTransaction({
+  const transactions: Partial<Transaction>[] = parsed.map(t => ({
       description: t.description,
       amount: Math.abs(t.amount),
       date: new Date(t.date).toISOString(),
@@ -154,8 +155,10 @@ export const importTransactionsFromOFX = async (ofxText: string): Promise<number
       tags: ['OFX Import'],
       isRecurring: false,
       isInstallment: false
-    });
-    successCount++;
+  }));
+
+  if (transactions.length > 0) {
+      return await createBulkTransactions(transactions);
   }
-  return successCount;
+  return 0;
 };

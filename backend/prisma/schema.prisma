@@ -17,10 +17,24 @@ model User {
 
   currency     String   @default("BRL")
   language     String   @default("en")
+  refreshToken String?
 
   cards        Card[]
   transactions Transaction[]
   budgets      Budget[]
+  goals        Goal[]
+}
+
+model Goal {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  name          String
+  targetAmount  Float
+  currentAmount Float     @default(0)
+  deadline      DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 
 model Card {
@@ -62,6 +76,8 @@ model Transaction {
   recurrenceEndDate   DateTime?
 
   createdAt           DateTime @default(now())
+  deletedAt           DateTime?
+  receiptUrl          String?
 }
 
 model Budget {
