@@ -15,9 +15,10 @@ interface TransactionsViewProps {
   error?: Error | null;
   showToast?: (msg: string, type: 'success' | 'error') => void;
   currency?: string;
+  isPrivate?: boolean;
 }
 
-export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions, loading, cards, onDelete, isDeleting, error, showToast, currency = 'BRL' }) => {
+export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions, loading, cards, onDelete, isDeleting, error, showToast, currency = 'BRL', isPrivate = false }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<'ALL' | TransactionType>('ALL');
   const [cardFilter, setCardFilter] = useState<string>('ALL');
@@ -133,7 +134,10 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
      );
   }
 
-  const formatMoney = (amount: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency }).format(amount);
+  const formatMoney = (amount: number) => {
+    if (isPrivate) return 'R$ ••••';
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency }).format(amount);
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -323,6 +327,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
         onStatusToggle={handleStatusToggle}
         isDeleting={isDeleting}
         currency={currency}
+        isPrivate={isPrivate}
       />
 
       {editingTransaction && (

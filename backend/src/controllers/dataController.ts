@@ -1,6 +1,129 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma';
 import { AuthRequest } from '../middleware/auth';
+import { GoogleGenAI } from '@google/genai';
+
+// --- WhatsApp Queue System ---
+interface QueueItem {
+  text: string;
+  sender: string; // Phone number or ID
+}
+
+const messageQueue: QueueItem[] = [];
+let isProcessing = false;
+
+const processMessage = async (item: QueueItem) => {
+  console.log('Processing WhatsApp message:', item.text);
+
+  // 1. Identification: In a real app, map sender -> userId.
+  // For this demo, we'll try to find the first user or a specific user.
+  // We'll assume the "sender" might match a user field if we had one,
+  // but for now let's just use the first user in DB as a fallback or mock it.
+  const user = await prisma.user.findFirst();
+  if (!user) return;
+
+  try {
+      // 2. Extraction Strategy: Regex First, then AI
+      // Simple Regex: "R$ 50 Padaria" or "50 Padaria"
+      const simpleRegex = /(?:R\$)?\s*(\d+(?:[.,]\d{2})?)\s+(.*)/i;
+      const match = item.text.match(simpleRegex);
+
+      let amount: number | null = null;
+      let description: string | null = null;
+      let cardName: string | null = null;
+
+      if (match) {
+          amount = parseFloat(match[1].replace(',', '.'));
+          description = match[2].trim();
+          // Check if description ends with a card name we know?
+          // Skipping complex regex for card extraction for now.
+      }
+
+      // If regex failed or we want smarter extraction, use Gemini (rate limited)
+      // Since we are in a 15s delayed queue, we can safely use Gemini.
+      if (!amount || !description) {
+           const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+           try {
+               const prompt = `Extract transaction data from this text: "${item.text}". Return JSON with keys: "amount" (number), "description" (string), "cardName" (string or null). If invalid, return null.`;
+               const result = await ai.models.generateContent({
+                   model: 'gemini-2.0-flash',
+                   contents: [{ parts: [{ text: prompt }] }]
+               });
+               const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+               if (text) {
+                   const clean = text.replace(/```json/g, '').replace(/```/g, '').trim();
+                   const data = JSON.parse(clean);
+                   if (data && data.amount) {
+                       amount = data.amount;
+                       description = data.description;
+                       cardName = data.cardName;
+                   }
+               }
+           } catch (e) {
+               console.error("AI Extraction failed", e);
+           }
+      }
+
+      if (amount && description) {
+          // Find card if specified
+          let cardId = null;
+          if (cardName) {
+              const card = await prisma.card.findFirst({
+                  where: { userId: user.id, name: { contains: cardName } }
+              });
+              if (card) cardId = card.id;
+          }
+
+          // Create Transaction
+          await prisma.transaction.create({
+              data: {
+                  userId: user.id,
+                  description: description,
+                  amount: -Math.abs(amount), // Assume expense
+                  date: new Date(),
+                  type: 'EXPENSE',
+                  status: 'PAID',
+                  category: 'Uncategorized', // We could run categorization here too!
+                  cardId: cardId
+              }
+          });
+          console.log('Transaction created via WhatsApp');
+      }
+
+  } catch (error) {
+      console.error('Error processing message item', error);
+  }
+};
+
+const processQueue = async () => {
+  if (messageQueue.length === 0) {
+      isProcessing = false;
+      return;
+  }
+
+  isProcessing = true;
+  const item = messageQueue.shift();
+  if (item) {
+      await processMessage(item);
+  }
+
+  // 15 seconds delay between processing to respect Rate Limits
+  setTimeout(processQueue, 15000);
+};
+
+export const handleWhatsAppWebhook = async (req: Request, res: Response) => {
+    const { message, sender } = req.body;
+    // Expecting generic webhook payload: { message: "...", sender: "..." }
+
+    if (message) {
+        messageQueue.push({ text: message, sender: sender || 'Unknown' });
+        if (!isProcessing) {
+            processQueue();
+        }
+    }
+
+    res.json({ status: 'queued' });
+};
 
 export const exportData = async (req: AuthRequest, res: Response) => {
   if (!req.user) return res.status(401).json({ error: 'Unauthorized' });

@@ -227,25 +227,63 @@ export const createBulkTransactions = async (req: AuthRequest, res: Response) =>
             console.warn('Gemini init failed', e);
         }
 
-        const processed = await Promise.all(transactions.map(async (t: any) => {
-            if (!t.description || t.amount === undefined || !t.date) return null;
+        // 1. Prepare Categorization Cache
+        const incomingDescriptions = [...new Set(transactions.map((t: any) => t.description).filter((d: any) => d))];
+        const categoryMap = new Map<string, string>();
 
-            let category = t.category;
+        // Check DB for existing categorizations
+        try {
+            const existing = await prisma.transaction.findMany({
+                where: {
+                    userId: req.user.id,
+                    description: { in: incomingDescriptions as string[] },
+                    category: { not: 'Uncategorized' }
+                },
+                select: { description: true, category: true }
+            });
+            existing.forEach(t => categoryMap.set(t.description, t.category));
+        } catch (e) {
+            console.warn('Failed to fetch existing categories', e);
+        }
 
-            // AI Categorization if missing or Uncategorized
-            if (ai && (!category || category === 'Uncategorized') && t.description) {
+        // Identify what still needs AI
+        const needsAi = incomingDescriptions.filter(d => !categoryMap.has(d as string));
+
+        // Batch AI Processing
+        if (needsAi.length > 0 && ai) {
+            const BATCH_SIZE = 20;
+            for (let i = 0; i < needsAi.length; i += BATCH_SIZE) {
+                const batch = needsAi.slice(i, i + BATCH_SIZE);
                 try {
-                     const prompt = `Categorize this transaction description into a single word category (e.g. Food, Transport, Shopping, Services, Entertainment, Health, Home, Travel, Education). Description: "${t.description}". Return ONLY the category name.`;
+                     const prompt = `Categorize the following descriptions into single-word categories (e.g. Food, Transport, Shopping, Services, Entertainment, Health, Home, Travel, Education). Descriptions: ${JSON.stringify(batch)}. Return ONLY a JSON array of strings.`;
+
                      const result = await ai.models.generateContent({
                         model: 'gemini-2.0-flash',
                         contents: [{ parts: [{ text: prompt }] }]
                      });
 
                      const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                     if (text) category = text.trim();
+                     if (text) {
+                         const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+                         const categories = JSON.parse(cleanText);
+                         if (Array.isArray(categories) && categories.length === batch.length) {
+                             batch.forEach((desc, idx) => {
+                                 categoryMap.set(desc as string, categories[idx]);
+                             });
+                         }
+                     }
                 } catch (e) {
-                    // Fail silently, keep Uncategorized
+                    console.error("Gemini batch failed, proceeding with defaults", e);
                 }
+            }
+        }
+
+        const valid = transactions.map((t: any) => {
+            if (!t.description || t.amount === undefined || !t.date) return null;
+
+            let category = t.category;
+            if (!category || category === 'Uncategorized') {
+                category = categoryMap.get(t.description) || 'Uncategorized';
             }
 
             return {
@@ -255,17 +293,16 @@ export const createBulkTransactions = async (req: AuthRequest, res: Response) =>
                 date: new Date(t.date),
                 type: t.type || (t.amount < 0 ? 'EXPENSE' : 'INCOME'),
                 status: t.status || 'PAID',
-                category: category || 'Uncategorized',
+                category: category,
                 tags: Array.isArray(t.tags) ? t.tags.join(',') : (t.tags || null),
                 cardId: t.cardId || null,
                 isInstallment: false,
                 isRecurring: false
             };
-        }));
+        }).filter((t: any) => t !== null);
 
-        const valid = processed.filter(t => t !== null);
         if (valid.length > 0) {
-            await prisma.transaction.createMany({ data: valid });
+            await prisma.transaction.createMany({ data: valid as any });
         }
 
         res.json({ count: valid.length });

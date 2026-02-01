@@ -12,12 +12,13 @@ interface TransactionTableProps {
   onStatusToggle?: (transaction: Transaction) => void;
   isDeleting?: boolean;
   currency?: string;
+  isPrivate?: boolean;
 }
 
 type SortKey = 'date' | 'amount' | 'description';
 type SortDirection = 'asc' | 'desc';
 
-export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions, loading, cards, onDelete, onEdit, onStatusToggle, isDeleting, currency = 'BRL' }) => {
+export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions, loading, cards, onDelete, onEdit, onStatusToggle, isDeleting, currency = 'BRL', isPrivate = false }) => {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: SortDirection } | null>(null);
 
@@ -223,12 +224,12 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
                   <td className="px-6 py-4 text-right">
                     <div className="flex flex-col items-end">
                       <span className={`font-semibold text-sm ${t.type === TransactionType.INCOME ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}`}>
-                        {t.type === TransactionType.INCOME ? '+' : ''}{new Intl.NumberFormat('pt-BR', { style: 'currency', currency }).format(t.amount)}
+                        {isPrivate ? 'R$ ••••' : (t.type === TransactionType.INCOME ? '+' : '') + new Intl.NumberFormat('pt-BR', { style: 'currency', currency }).format(t.amount)}
                       </span>
                       {/* Foreign Currency Indicator */}
                       {t.originalAmount && t.originalCurrency && t.originalCurrency !== Currency.BRL && (
                         <span className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
-                          <Globe size={10} /> {new Intl.NumberFormat('en-US', { style: 'currency', currency: t.originalCurrency }).format(t.originalAmount)}
+                          <Globe size={10} /> {isPrivate ? '•••' : new Intl.NumberFormat('en-US', { style: 'currency', currency: t.originalCurrency }).format(t.originalAmount)}
                         </span>
                       )}
                     </div>

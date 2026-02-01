@@ -9,6 +9,7 @@ export const BudgetView: React.FC = () => {
   const queryClient = useQueryClient();
   const [isAdding, setIsAdding] = useState(false);
   const [newCategory, setNewCategory] = useState('');
+  const [newTag, setNewTag] = useState('');
   const [newAmount, setNewAmount] = useState('');
 
   const { data: budgetsData, isLoading } = useQuery({
@@ -25,6 +26,7 @@ export const BudgetView: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
       setIsAdding(false);
       setNewCategory('');
+      setNewTag('');
       setNewAmount('');
     }
   });
@@ -37,7 +39,7 @@ export const BudgetView: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (newCategory && newAmount) {
-      createMutation.mutate({ category: newCategory, amount: Number(newAmount) });
+      createMutation.mutate({ category: newCategory, amount: Number(newAmount), tag: newTag || undefined });
     }
   };
 
@@ -69,6 +71,16 @@ export const BudgetView: React.FC = () => {
                   className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border rounded-lg text-sm dark:text-white"
                   value={newCategory}
                   onChange={e => setNewCategory(e.target.value)}
+                />
+              </div>
+              <div className="w-32">
+                <label className="text-xs text-slate-500 mb-1 block">Tag (Opt)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Trip"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border rounded-lg text-sm dark:text-white"
+                  value={newTag}
+                  onChange={e => setNewTag(e.target.value)}
                 />
               </div>
               <div className="w-32">
@@ -118,7 +130,10 @@ export const BudgetView: React.FC = () => {
                 <div key={budget.id} className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 relative group">
                    <div className="flex justify-between items-start mb-4">
                      <div>
-                       <h3 className="font-bold text-slate-900 dark:text-white text-lg">{budget.category}</h3>
+                       <h3 className="font-bold text-slate-900 dark:text-white text-lg flex items-center gap-2">
+                         {budget.category}
+                         {budget.tag && <span className="px-2 py-0.5 rounded text-xs bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 font-normal">{budget.tag}</span>}
+                       </h3>
                        <p className="text-xs text-slate-500">Monthly Limit: {formatCurrency(budget.amount)}</p>
                      </div>
                      <button 

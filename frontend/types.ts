@@ -81,7 +81,7 @@ export interface Budget {
   id: string;
   category: string; // Matches transaction category
   amount: number;
-  tags?: string[]; // Optional: Budget specific to tags
+  tag?: string; // Optional: Budget specific to tags
   period: 'MONTHLY'; // Simplified for now
 }
 

@@ -81,10 +81,11 @@ model Transaction {
 }
 
 model Budget {
-  id       String @id @default(uuid())
+  id       String  @id @default(uuid())
   userId   String
-  user     User   @relation(fields: [userId], references: [id])
+  user     User    @relation(fields: [userId], references: [id])
   category String
+  tag      String?
   amount   Float
   period   String
 }

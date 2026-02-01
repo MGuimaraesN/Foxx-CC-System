@@ -9,6 +9,7 @@ import dashboardRoutes from './routes/dashboardRoutes';
 import newsRoutes from './routes/newsRoutes';
 import dataRoutes from './routes/dataRoutes';
 import goalRoutes from './routes/goalRoutes';
+import { handleWhatsAppWebhook } from './controllers/dataController';
 
 const app = express();
 
@@ -19,6 +20,8 @@ app.use(morgan('dev'));
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
+
+app.post('/api/webhooks/whatsapp', handleWhatsAppWebhook);
 
 app.use('/auth', authRoutes);
 app.use('/transactions', transactionRoutes);

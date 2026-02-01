@@ -5,6 +5,7 @@ import { AuthRequest } from '../middleware/auth';
 
 const budgetSchema = z.object({
   category: z.string(),
+  tag: z.string().optional(),
   amount: z.number(),
   period: z.string().default('MONTHLY'),
 });
@@ -24,17 +25,23 @@ export const getBudgets = async (req: AuthRequest, res: Response) => {
     const endOfMonth = new Date(currentYear, currentMonth + 1, 0);
 
     const usage = await Promise.all(budgets.map(async (b) => {
+        const whereClause: any = {
+            userId: req.user!.id,
+            category: b.category,
+            type: 'EXPENSE',
+            date: {
+                gte: startOfMonth,
+                lte: endOfMonth
+            }
+        };
+
+        if (b.tag) {
+            whereClause.tags = { contains: b.tag };
+        }
+
         const spentAgg = await prisma.transaction.aggregate({
             _sum: { amount: true },
-            where: {
-                userId: req.user!.id,
-                category: b.category,
-                type: 'EXPENSE',
-                date: {
-                    gte: startOfMonth,
-                    lte: endOfMonth
-                }
-            }
+            where: whereClause
         });
         const spent = spentAgg._sum.amount || 0;
         return {

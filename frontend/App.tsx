@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { LayoutDashboard, Receipt, CreditCard, Settings, Plus, Sun, Moon, LogOut, X, Newspaper, PieChart, Upload, Menu, Target } from 'lucide-react';
+import { LayoutDashboard, Receipt, CreditCard, Settings, Plus, Sun, Moon, LogOut, X, Newspaper, PieChart, Upload, Menu, Target, Eye, EyeOff } from 'lucide-react';
 import { Dashboard } from './components/Dashboard';
 import { TransactionTable } from './components/TransactionTable';
 import { TransactionForm } from './components/TransactionForm';
@@ -38,6 +38,7 @@ const NavItem: React.FC<{
 const App: React.FC = () => {
   const [isAuth, setIsAuth] = useState(false);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('cc_dark_mode') === 'true');
+  const [isPrivate, setIsPrivate] = useState(false);
   const [currency, setCurrency] = useState(() => localStorage.getItem('cc_currency') || 'BRL');
   const [language, setLanguage] = useState(() => localStorage.getItem('cc_language') || 'en');
   const [showModal, setShowModal] = useState(false);
@@ -130,7 +131,7 @@ const App: React.FC = () => {
       case 'dashboard':
         return (
           <div className="space-y-8 animate-in fade-in duration-500">
-            <Dashboard stats={stats} isLoading={isLoading} currency={currency} />
+            <Dashboard stats={stats} isLoading={isLoading} currency={currency} isPrivate={isPrivate} />
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white">Recent Activity</h3>
@@ -146,6 +147,7 @@ const App: React.FC = () => {
                 loading={isLoading} 
                 cards={cards}
                 currency={currency}
+                isPrivate={isPrivate}
               />
             </div>
           </div>
@@ -161,11 +163,12 @@ const App: React.FC = () => {
             error={isError ? (error as Error) : null}
             showToast={(msg, type) => type === 'success' ? toast.success(msg) : toast.error(msg)}
             currency={currency}
+            isPrivate={isPrivate}
           />
         );
       case 'cards':
         return (
-          <CardsView cards={cards} loading={isLoading} />
+          <CardsView cards={cards} loading={isLoading} transactions={transactions} />
         );
       case 'budgets':
         return (
@@ -356,6 +359,14 @@ const App: React.FC = () => {
             </div>
             
             <div className="flex items-center gap-2 md:gap-4">
+              <button
+                onClick={() => setIsPrivate(!isPrivate)}
+                className="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                title={isPrivate ? "Disable Privacy Mode" : "Enable Privacy Mode"}
+              >
+                {isPrivate ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+
               <button 
                 onClick={() => setDarkMode(!darkMode)}
                 className="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"

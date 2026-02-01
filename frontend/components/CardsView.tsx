@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { CreditCard } from '../types';
+import React, { useState, useMemo } from 'react';
+import { CreditCard, Transaction } from '../types';
 import { Skeleton } from './ui/Skeleton';
 import { Plus, Wifi, Edit2, ThumbsUp } from 'lucide-react';
 import { CardForm } from './CardForm';
@@ -8,11 +8,30 @@ interface CardsViewProps {
   cards: CreditCard[];
   loading: boolean;
   onSuccess?: () => void;
+  transactions?: Transaction[];
 }
 
-export const CardsView: React.FC<CardsViewProps> = ({ cards, loading, onSuccess }) => {
+export const CardsView: React.FC<CardsViewProps> = ({ cards, loading, onSuccess, transactions = [] }) => {
   const [showCardModal, setShowCardModal] = useState(false);
   const [editingCard, setEditingCard] = useState<CreditCard | null>(null);
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+
+  const history = useMemo(() => {
+      if (!selectedCardId || !transactions) return [];
+
+      const cardTx = transactions.filter(t => t.cardId === selectedCardId && (t.type === 'EXPENSE' || t.amount < 0)); // Handle expense
+      const grouped = cardTx.reduce((acc, t) => {
+          const date = new Date(t.date);
+          const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+          if (!acc[key]) acc[key] = 0;
+          acc[key] += Math.abs(t.amount); // Sum absolute amount
+          return acc;
+      }, {} as Record<string, number>);
+
+      return Object.entries(grouped)
+        .sort((a, b) => b[0].localeCompare(a[0])) // Descending
+        .map(([key, amount]) => ({ month: key, amount }));
+  }, [selectedCardId, transactions]);
 
   const handleEdit = (card: CreditCard) => {
     setEditingCard(card);
@@ -124,27 +143,65 @@ export const CardsView: React.FC<CardsViewProps> = ({ cards, loading, onSuccess 
       </div>
 
       {/* Card Details / Analysis Section */}
-      <div className="mt-10 bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-100 dark:border-slate-700">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Limit Utilization</h3>
-        <div className="space-y-4">
-          {cards.map(card => {
-             // Mock utilization for visualization
-             const randomUtil = Math.floor(Math.random() * 80) + 10;
-             return (
-               <div key={card.id}>
-                 <div className="flex justify-between text-sm mb-1">
-                   <span className="text-slate-700 dark:text-slate-300">{card.name}</span>
-                   <span className="text-slate-500">{randomUtil}%</span>
+      <div className="mt-10 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-100 dark:border-slate-700">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Limit Utilization</h3>
+          <div className="space-y-4">
+            {cards.map(card => {
+               // Mock utilization for visualization (Ideally real data)
+               const randomUtil = Math.floor(Math.random() * 80) + 10;
+               return (
+                 <div key={card.id}>
+                   <div className="flex justify-between text-sm mb-1">
+                     <span className="text-slate-700 dark:text-slate-300">{card.name}</span>
+                     <span className="text-slate-500">{randomUtil}%</span>
+                   </div>
+                   <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2.5">
+                     <div
+                        className={`h-2.5 rounded-full ${randomUtil > 75 ? 'bg-red-500' : 'bg-indigo-600'}`}
+                        style={{ width: `${randomUtil}%` }}
+                      ></div>
+                   </div>
                  </div>
-                 <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2.5">
-                   <div 
-                      className={`h-2.5 rounded-full ${randomUtil > 75 ? 'bg-red-500' : 'bg-indigo-600'}`} 
-                      style={{ width: `${randomUtil}%` }}
-                    ></div>
-                 </div>
-               </div>
-             )
-          })}
+               )
+            })}
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-100 dark:border-slate-700">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Invoice History</h3>
+            <div className="flex gap-2 overflow-x-auto pb-2 mb-4 no-scrollbar">
+                {cards.map(card => (
+                    <button
+                        key={card.id}
+                        onClick={() => setSelectedCardId(card.id)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${selectedCardId === card.id ? 'bg-indigo-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'}`}
+                    >
+                        {card.name}
+                    </button>
+                ))}
+            </div>
+
+            <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                {selectedCardId ? (
+                    history.length === 0 ? (
+                        <p className="text-slate-500 text-sm text-center py-4">No history found.</p>
+                    ) : (
+                        history.map(item => (
+                            <div key={item.month} className="flex justify-between p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-100 dark:border-slate-700/50">
+                                <span className="font-medium text-slate-700 dark:text-slate-300 text-sm capitalize">
+                                    {new Date(item.month + '-02').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+                                </span>
+                                <span className="font-bold text-slate-900 dark:text-white text-sm">
+                                    {formatCurrency(item.amount)}
+                                </span>
+                            </div>
+                        ))
+                    )
+                ) : (
+                    <p className="text-slate-500 text-sm text-center py-4">Select a card to view history.</p>
+                )}
+            </div>
         </div>
       </div>
 

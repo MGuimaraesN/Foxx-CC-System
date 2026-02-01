@@ -1,6 +1,6 @@
 import React from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Line, ComposedChart, Bar } from 'recharts';
-import { CreditCard, TrendingUp, TrendingDown, AlertCircle, HeartPulse, Clock, Activity } from 'lucide-react';
+import { CreditCard, TrendingUp, TrendingDown, AlertCircle, HeartPulse, Clock, Activity, AlertTriangle } from 'lucide-react';
 import { DashboardStats } from '../types';
 import { Skeleton } from './ui/Skeleton';
 
@@ -8,6 +8,7 @@ interface DashboardProps {
   stats: DashboardStats | null;
   isLoading: boolean;
   currency?: string;
+  isPrivate?: boolean;
 }
 
 const StatCard: React.FC<{ title: string; value: string; icon: React.ReactNode; subtext?: string; loading: boolean; colorClass?: string }> = ({ title, value, icon, subtext, loading, colorClass }) => (
@@ -29,7 +30,7 @@ const StatCard: React.FC<{ title: string; value: string; icon: React.ReactNode; 
   </div>
 );
 
-export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency = 'BRL' }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency = 'BRL', isPrivate = false }) => {
   if (isLoading && !stats) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -38,7 +39,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
     );
   }
 
-  const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency }).format(val);
+  const formatCurrency = (val: number) => {
+    if (isPrivate) return 'R$ ••••';
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency }).format(val);
+  };
 
   // Forecast Logic
   const now = new Date();
@@ -104,6 +108,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
           subtext="Rolling average baseline"
           loading={isLoading}
         />
+
+        {/* Limit Alert */}
+        {((stats?.usedLimit || 0) / (stats?.totalLimit || 1)) > 0.8 && (
+            <div className="col-span-full p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 text-red-800 dark:bg-red-900/20 dark:border-red-800 dark:text-red-300 animate-pulse">
+                <AlertTriangle size={24} />
+                <div>
+                   <h4 className="font-bold">Limit Approaching</h4>
+                   <p className="text-sm">You have used {((stats?.usedLimit || 0) / (stats?.totalLimit || 1) * 100).toFixed(0)}% of your total credit limit.</p>
+                </div>
+            </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -135,10 +150,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
                         axisLine={false}
                         tickLine={false}
                         tick={{ fill: '#64748b' }}
-                        tickFormatter={(value) => `R$${value/1000}k`}
+                        tickFormatter={(value) => isPrivate ? '•' : `R$${value/1000}k`}
                     />
                     <Tooltip
                         contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
+                        formatter={(value: any) => isPrivate ? 'R$ ••••' : formatCurrency(value)}
                     />
                     <Bar dataKey="amount" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={40} />
                     <Line type="monotone" dataKey="average" stroke="#34d399" strokeWidth={2} dot={false} strokeDasharray="5 5" />
