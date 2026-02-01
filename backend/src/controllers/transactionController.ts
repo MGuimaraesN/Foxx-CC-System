@@ -78,7 +78,7 @@ export const createTransaction = async (req: AuthRequest, res: Response) => {
 
         transactionsToCreate.push({
           userId,
-          description: data.description,
+          description: `${data.description} (${thisInstallmentNum}/${data.totalInstallments})`,
           amount,
           date: installmentDate,
           type: data.type,

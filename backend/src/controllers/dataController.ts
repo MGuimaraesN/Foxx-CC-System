@@ -86,7 +86,7 @@ const processMessage = async (item: QueueItem) => {
 
                   transactionsToCreate.push({
                       userId: user.id,
-                      description: description,
+                      description: `${description} (${i + 1}/${totalInstallments})`,
                       amount: thisAmount,
                       date: installmentDate,
                       type: 'EXPENSE',
