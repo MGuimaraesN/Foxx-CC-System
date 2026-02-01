@@ -23,53 +23,43 @@ const processMessage = async (item: QueueItem) => {
   if (!user) return;
 
   try {
-      // 2. Extraction Strategy: Regex First, then AI
-      // Simple Regex: "R$ 50 Padaria" or "50 Padaria"
-      const simpleRegex = /(?:R\$)?\s*(\d+(?:[.,]\d{2})?)\s+(.*)/i;
-      const match = item.text.match(simpleRegex);
+      // 2. Extraction Strategy: Gemini 2.0 Flash (Prioritized)
+      // We are in a delayed queue, so we can afford the API call.
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      let extractedData: any = null;
 
-      let amount: number | null = null;
-      let description: string | null = null;
-      let cardName: string | null = null;
+      try {
+           const prompt = `Extract transaction data from this text: "${item.text}". Return JSON with keys: "description" (string), "amount" (number), "date" (ISOString, use today if missing), "status" (PAID or PENDING), "cardName" (string or null). If status is not clear, default to PENDING. Return ONLY the JSON object.`;
 
-      if (match) {
-          amount = parseFloat(match[1].replace(',', '.'));
-          description = match[2].trim();
-          // Check if description ends with a card name we know?
-          // Skipping complex regex for card extraction for now.
-      }
+           const result = await ai.models.generateContent({
+               model: 'gemini-2.0-flash',
+               contents: [{ parts: [{ text: prompt }] }]
+           });
 
-      // If regex failed or we want smarter extraction, use Gemini (rate limited)
-      // Since we are in a 15s delayed queue, we can safely use Gemini.
-      if (!amount || !description) {
-           const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-           try {
-               const prompt = `Extract transaction data from this text: "${item.text}". Return JSON with keys: "amount" (number), "description" (string), "cardName" (string or null). If invalid, return null.`;
-               const result = await ai.models.generateContent({
-                   model: 'gemini-2.0-flash',
-                   contents: [{ parts: [{ text: prompt }] }]
-               });
-               const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-               if (text) {
-                   const clean = text.replace(/```json/g, '').replace(/```/g, '').trim();
-                   const data = JSON.parse(clean);
-                   if (data && data.amount) {
-                       amount = data.amount;
-                       description = data.description;
-                       cardName = data.cardName;
-                   }
-               }
-           } catch (e) {
-               console.error("AI Extraction failed", e);
+           const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+           if (text) {
+               const clean = text.replace(/```json/g, '').replace(/```/g, '').trim();
+               extractedData = JSON.parse(clean);
            }
+      } catch (e) {
+           console.error("AI Extraction failed", e);
       }
 
-      if (amount && description) {
+      if (extractedData && extractedData.amount && extractedData.description) {
+          const amount = Math.abs(extractedData.amount); // Always positive for now, logic below handles sign
+          const description = extractedData.description;
+          const status = extractedData.status === 'PAID' ? 'PAID' : 'PENDING'; // Default PENDING
+          const date = extractedData.date ? new Date(extractedData.date) : new Date();
+
           // Find card if specified
           let cardId = null;
-          if (cardName) {
+          if (extractedData.cardName) {
+              // Search for card matching the name (case-insensitive usually by DB, but contains is good)
               const card = await prisma.card.findFirst({
-                  where: { userId: user.id, name: { contains: cardName } }
+                  where: {
+                      userId: user.id,
+                      name: { contains: extractedData.cardName } // e.g. "Nubank"
+                  }
               });
               if (card) cardId = card.id;
           }
@@ -79,15 +69,17 @@ const processMessage = async (item: QueueItem) => {
               data: {
                   userId: user.id,
                   description: description,
-                  amount: -Math.abs(amount), // Assume expense
-                  date: new Date(),
+                  amount: -amount, // Assume expense for now from WhatsApp
+                  date: date,
                   type: 'EXPENSE',
-                  status: 'PAID',
-                  category: 'Uncategorized', // We could run categorization here too!
+                  status: status,
+                  category: 'Uncategorized',
                   cardId: cardId
               }
           });
-          console.log('Transaction created via WhatsApp');
+          console.log('Transaction created via WhatsApp:', description, amount);
+      } else {
+          console.warn('Could not extract valid transaction data from message.');
       }
 
   } catch (error) {
