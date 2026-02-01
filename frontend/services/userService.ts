@@ -51,6 +51,21 @@ export const updateUserProfile = (profile: UserProfile, newPassword?: string) =>
     console.warn("Update profile not implemented in backend yet");
 };
 
+export const updateUserSettings = async (settings: { currency?: string, language?: string }): Promise<UserProfile | null> => {
+  try {
+    const response = await api.patch('/auth/settings', settings);
+
+    // Update local storage as fallback/cache
+    if (settings.currency) localStorage.setItem('cc_currency', settings.currency);
+    if (settings.language) localStorage.setItem('cc_language', settings.language);
+
+    return response.data;
+  } catch (error) {
+    console.error("Failed to update settings", error);
+    return null;
+  }
+};
+
 // Data Backup & Restore
 export const generateBackup = async () => {
   try {

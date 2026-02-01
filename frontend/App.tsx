@@ -14,6 +14,7 @@ import { UserManagementView } from './components/UserManagementView';
 import { useTransactions, useCards, useDashboardStats, useCreateTransaction, useDeleteTransaction } from './hooks/useTransactions';
 import { isAuthenticated, logout, getUserProfile } from './services/userService';
 import { Toaster, toast } from 'sonner';
+import { UserProfile } from './types';
 
 type ViewState = 'dashboard' | 'transactions' | 'cards' | 'budgets' | 'news' | 'import' | 'settings' | 'user';
 
@@ -36,10 +37,12 @@ const NavItem: React.FC<{
 const App: React.FC = () => {
   const [isAuth, setIsAuth] = useState(false);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('cc_dark_mode') === 'true');
+  const [currency, setCurrency] = useState(() => localStorage.getItem('cc_currency') || 'BRL');
+  const [language, setLanguage] = useState(() => localStorage.getItem('cc_language') || 'en');
   const [showModal, setShowModal] = useState(false);
   const [currentView, setCurrentView] = useState<ViewState>('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [userProfile, setUserProfile] = useState({ name: '', email: '', avatarUrl: '' });
+  const [userProfile, setUserProfile] = useState<UserProfile>({ name: '', email: '', avatarUrl: '' });
 
   // Check Auth on Mount & Fix F5 Refresh Logic
   useEffect(() => {
@@ -54,7 +57,11 @@ const App: React.FC = () => {
   // Update Profile when view changes (simple sync)
   useEffect(() => {
     if (isAuth) {
-        getUserProfile().then(setUserProfile);
+        getUserProfile().then(profile => {
+          setUserProfile(profile);
+          if (profile.currency) setCurrency(profile.currency);
+          if (profile.language) setLanguage(profile.language);
+        });
     }
   }, [isAuth]);
 
@@ -118,7 +125,7 @@ const App: React.FC = () => {
       case 'dashboard':
         return (
           <div className="space-y-8 animate-in fade-in duration-500">
-            <Dashboard stats={stats} isLoading={isLoading} />
+            <Dashboard stats={stats} isLoading={isLoading} currency={currency} />
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white">Recent Activity</h3>
@@ -132,7 +139,8 @@ const App: React.FC = () => {
               <TransactionTable 
                 transactions={transactions.slice(0, 5)} 
                 loading={isLoading} 
-                cards={cards} 
+                cards={cards}
+                currency={currency}
               />
             </div>
           </div>
@@ -147,6 +155,7 @@ const App: React.FC = () => {
             isDeleting={deleteMutation.isPending}
             error={isError ? error : null}
             showToast={(msg, type) => type === 'success' ? toast.success(msg) : toast.error(msg)}
+            currency={currency}
           />
         );
       case 'cards':
@@ -167,7 +176,14 @@ const App: React.FC = () => {
         );
       case 'settings':
         return (
-          <SettingsView darkMode={darkMode} setDarkMode={setDarkMode} />
+          <SettingsView
+            darkMode={darkMode}
+            setDarkMode={setDarkMode}
+            currency={currency}
+            setCurrency={setCurrency}
+            language={language}
+            setLanguage={setLanguage}
+          />
         );
       case 'user':
         return (

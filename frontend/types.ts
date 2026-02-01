@@ -108,5 +108,7 @@ export interface UserProfile {
   name: string;
   email: string;
   avatarUrl: string;
+  currency?: string;
+  language?: string;
   passwordHash?: string; // Stored locally
 }

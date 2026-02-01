@@ -7,6 +7,7 @@ import { Skeleton } from './ui/Skeleton';
 interface DashboardProps {
   stats: DashboardStats | null;
   isLoading: boolean;
+  currency?: string;
 }
 
 const StatCard: React.FC<{ title: string; value: string; icon: React.ReactNode; subtext?: string; loading: boolean; colorClass?: string }> = ({ title, value, icon, subtext, loading, colorClass }) => (
@@ -28,7 +29,7 @@ const StatCard: React.FC<{ title: string; value: string; icon: React.ReactNode; 
   </div>
 );
 
-export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency = 'BRL' }) => {
   if (isLoading && !stats) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -37,7 +38,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading }) => {
     );
   }
 
-  const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+  const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency }).format(val);
 
   return (
     <div className="space-y-6">

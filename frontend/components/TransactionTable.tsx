@@ -11,12 +11,13 @@ interface TransactionTableProps {
   onEdit?: (transaction: Transaction) => void;
   onStatusToggle?: (transaction: Transaction) => void;
   isDeleting?: boolean;
+  currency?: string;
 }
 
 type SortKey = 'date' | 'amount' | 'description';
 type SortDirection = 'asc' | 'desc';
 
-export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions, loading, cards, onDelete, onEdit, onStatusToggle, isDeleting }) => {
+export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions, loading, cards, onDelete, onEdit, onStatusToggle, isDeleting, currency = 'BRL' }) => {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: SortDirection } | null>(null);
 
@@ -222,7 +223,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
                   <td className="px-6 py-4 text-right">
                     <div className="flex flex-col items-end">
                       <span className={`font-semibold text-sm ${t.type === TransactionType.INCOME ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}`}>
-                        {t.type === TransactionType.INCOME ? '+' : ''}{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: t.currency || 'BRL' }).format(t.amount)}
+                        {t.type === TransactionType.INCOME ? '+' : ''}{new Intl.NumberFormat('pt-BR', { style: 'currency', currency }).format(t.amount)}
                       </span>
                       {/* Foreign Currency Indicator */}
                       {t.originalAmount && t.originalCurrency && t.originalCurrency !== Currency.BRL && (

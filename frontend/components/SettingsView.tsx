@@ -1,17 +1,33 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import { Moon, Shield, Globe, Monitor, Database, Download, Upload, AlertTriangle } from 'lucide-react';
-import { generateBackup, restoreBackup } from '../services/userService';
+import { generateBackup, restoreBackup, updateUserSettings } from '../services/userService';
 import { toast } from 'sonner';
 
 interface SettingsViewProps {
   darkMode: boolean;
   setDarkMode: (val: boolean) => void;
+  currency: string;
+  setCurrency: (val: string) => void;
+  language: string;
+  setLanguage: (val: string) => void;
 }
 
-export const SettingsView: React.FC<SettingsViewProps> = ({ darkMode, setDarkMode }) => {
+export const SettingsView: React.FC<SettingsViewProps> = ({
+  darkMode, setDarkMode, currency, setCurrency, language, setLanguage
+}) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [currency, setCurrency] = useState(() => localStorage.getItem('cc_currency') || 'BRL');
-  const [language, setLanguage] = useState(() => localStorage.getItem('cc_language') || 'en');
+
+  const handleCurrencyChange = async (newCurrency: string) => {
+    setCurrency(newCurrency);
+    await updateUserSettings({ currency: newCurrency });
+    toast.success('Currency updated');
+  };
+
+  const handleLanguageChange = async (newLanguage: string) => {
+    setLanguage(newLanguage);
+    await updateUserSettings({ language: newLanguage });
+    toast.success('Language updated');
+  };
 
   const handleRestore = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -141,10 +157,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ darkMode, setDarkMod
                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Primary Currency</label>
                <select
                  value={currency}
-                 onChange={(e) => {
-                   setCurrency(e.target.value);
-                   localStorage.setItem('cc_currency', e.target.value);
-                 }}
+                 onChange={(e) => handleCurrencyChange(e.target.value)}
                  className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:text-white"
                >
                  <option value="BRL">Real Brasileiro (BRL)</option>
@@ -156,10 +169,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ darkMode, setDarkMod
                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Language</label>
                <select
                  value={language}
-                 onChange={(e) => {
-                   setLanguage(e.target.value);
-                   localStorage.setItem('cc_language', e.target.value);
-                 }}
+                 onChange={(e) => handleLanguageChange(e.target.value)}
                  className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:text-white"
                >
                  <option value="en">English</option>
