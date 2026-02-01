@@ -1,0 +1,71 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  avatarUrl    String?
+  createdAt    DateTime @default(now())
+
+  cards        Card[]
+  transactions Transaction[]
+  budgets      Budget[]
+}
+
+model Card {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  name        String
+  last4Digits String
+  limit       Float
+  closingDay  Int
+  dueDay      Int
+  color       String
+
+  transactions Transaction[]
+}
+
+model Transaction {
+  id                  String   @id @default(uuid())
+  userId              String
+  user                User     @relation(fields: [userId], references: [id])
+  description         String
+  amount              Float
+  date                DateTime
+  type                String   // INCOME, EXPENSE
+  status              String   // PAID, PENDING
+  category            String
+  tags                String?
+
+  cardId              String?
+  card                Card?    @relation(fields: [cardId], references: [id])
+
+  isInstallment       Boolean  @default(false)
+  installmentId       String?
+  installmentNumber   Int?
+  totalInstallments   Int?
+
+  isRecurring         Boolean  @default(false)
+  recurrenceFrequency String?
+  recurrenceEndDate   DateTime?
+
+  createdAt           DateTime @default(now())
+}
+
+model Budget {
+  id       String @id @default(uuid())
+  userId   String
+  user     User   @relation(fields: [userId], references: [id])
+  category String
+  amount   Float
+  period   String
+}
