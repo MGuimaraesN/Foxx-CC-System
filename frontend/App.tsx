@@ -43,6 +43,7 @@ const AppContent: React.FC = () => {
   const [currency, setCurrency] = useState(() => localStorage.getItem('cc_currency') || 'BRL');
   const { language, setLanguage, t } = useLanguage();
   const [showModal, setShowModal] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<any>(null); // Using any or Transaction type
   const [currentView, setCurrentView] = useState<ViewState>('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile>({ name: '', email: '', avatarUrl: '' });
@@ -118,7 +119,8 @@ const AppContent: React.FC = () => {
   }, [darkMode]);
 
   const handleCreateSuccess = () => {
-    toast.success('Transaction saved successfully');
+    toast.success(editingTransaction ? 'Transaction updated successfully' : 'Transaction saved successfully');
+    setEditingTransaction(null);
   };
 
   const handleDelete = (id: string) => {
@@ -158,7 +160,7 @@ const AppContent: React.FC = () => {
                 cards={cards}
                 currency={currency}
                 isPrivate={isPrivate}
-                onEdit={(t) => { setShowModal(true); }}
+                onEdit={(t) => { setEditingTransaction(t); setShowModal(true); }}
               />
             </div>
           </div>
@@ -387,7 +389,7 @@ const AppContent: React.FC = () => {
               </button>
               
               <button 
-                onClick={() => setShowModal(true)}
+                onClick={() => { setEditingTransaction(null); setShowModal(true); }}
                 className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 md:px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 shadow-lg shadow-indigo-500/20 transition-all hover:scale-105 active:scale-95"
               >
                 <Plus size={18} />
@@ -408,14 +410,11 @@ const AppContent: React.FC = () => {
         {/* Modals */}
         {showModal && (
           <TransactionForm 
-            onClose={() => setShowModal(false)} 
+            onClose={() => { setShowModal(false); setEditingTransaction(null); }}
             onSuccess={handleCreateSuccess}
             cards={cards}
             availableTags={availableTags}
-            // initialData would go here if we lifted state properly, but TransactionTable in Dashboard is just a view.
-            // The main TransactionsView handles editing fully.
-            // For the dashboard "Recent Activity", we might need to implement the edit handler fully if requested.
-            // The prompt says "garanta que o componente TransactionTable receba a prop onEdit".
+            initialData={editingTransaction}
           />
         )}
       </div>

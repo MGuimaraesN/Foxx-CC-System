@@ -192,9 +192,59 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
         });
     }
 
+    // Expense Breakdown (Category) - Current Month
+    const categoryAgg = await prisma.transaction.groupBy({
+        by: ['category'],
+        _sum: { amount: true },
+        where: {
+            userId,
+            type: 'EXPENSE',
+            deletedAt: null,
+            date: {
+                gte: startOfMonth,
+                lte: endOfMonth
+            }
+        }
+    });
+    const expenseBreakdown = categoryAgg.map(item => ({
+        name: item.category,
+        value: item._sum.amount || 0
+    })).sort((a, b) => b.value - a.value);
+
+    // Daily Trend - Current Month
+    const monthExpenses = await prisma.transaction.findMany({
+        where: {
+            userId,
+            type: 'EXPENSE',
+            deletedAt: null,
+            date: {
+                gte: startOfMonth,
+                lte: endOfMonth
+            }
+        },
+        select: { date: true, amount: true }
+    });
+
+    const dailyMap = new Map<number, number>();
+    const daysInMonth = endOfMonth.getDate();
+    for (let i = 1; i <= daysInMonth; i++) dailyMap.set(i, 0);
+
+    monthExpenses.forEach(t => {
+        const day = t.date.getDate();
+        dailyMap.set(day, (dailyMap.get(day) || 0) + t.amount);
+    });
+
+    const dailyTrend = Array.from(dailyMap.entries()).map(([day, amount]) => ({
+        day: day.toString(),
+        current: amount,
+        previous: Number((avgLast3Months / 30).toFixed(2)) // Rough daily average
+    })).sort((a, b) => Number(a.day) - Number(b.day));
+
     res.json({
         openInvoice,
         closedInvoice,
+        expenseBreakdown,
+        dailyTrend,
         totalLimit,
         usedLimit: openInvoice + closedInvoice,
         upcomingMaturities,

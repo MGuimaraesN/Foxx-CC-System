@@ -25,6 +25,7 @@ interface TransactionsViewProps {
 export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions, loading, cards, onDelete, isDeleting, error, showToast, currency = 'BRL', isPrivate = false }) => {
   const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<'ALL' | TransactionType>('ALL');
   const [statusFilter, setStatusFilter] = useState<'ALL' | TransactionStatus>('ALL');
   const [cardFilter, setCardFilter] = useState<string>('ALL');
@@ -43,10 +44,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
   // Debounce Search
   useEffect(() => {
     const timer = setTimeout(() => {
-        // Since we filter client side, standard state is fine, but if we were fetching, we'd debounce the query.
-        // For client side filter, just keeping state is enough, but "Refinement" asked for debounce.
-        // In this implementation, filteredTransactions derives from transactions + searchTerm.
-        // If the dataset is large, debounce helps.
+        setDebouncedSearchTerm(searchTerm);
     }, 300);
     return () => clearTimeout(timer);
   }, [searchTerm]);
@@ -119,8 +117,9 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
 
   const filteredTransactions = transactions.filter(t => {
     // Text Search
-    const matchesSearch = t.description.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          t.category.toLowerCase().includes(searchTerm.toLowerCase());
+    const term = debouncedSearchTerm.toLowerCase();
+    const matchesSearch = t.description.toLowerCase().includes(term) ||
+                          t.category.toLowerCase().includes(term);
     
     // Dropdown Filters
     const matchesType = typeFilter === 'ALL' || t.type === typeFilter;

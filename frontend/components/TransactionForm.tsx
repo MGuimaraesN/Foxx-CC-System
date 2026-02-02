@@ -5,6 +5,7 @@ import * as z from 'zod';
 import { X, Calendar, DollarSign, Tag, CreditCard as CardIcon, Repeat, ArrowUpCircle, ArrowDownCircle, Plus, CalendarOff, Layers, Upload } from 'lucide-react';
 import { TransactionType, Currency, CreditCard, Transaction, RecurrenceFrequency, TransactionStatus } from '../types';
 import { useCreateTransaction, useUpdateTransaction } from '../hooks/useTransactions';
+import { useBudgets } from '../hooks/useBudgets';
 
 interface TransactionFormProps {
   onClose: () => void;
@@ -42,8 +43,14 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSuc
   // React Query Mutations
   const createMutation = useCreateTransaction();
   const updateMutation = useUpdateTransaction();
+  const { data: budgets } = useBudgets();
 
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
+
+  // Merge standard categories with budget categories
+  const standardCategories = ['Food', 'Transport', 'Housing', 'Services', 'Health', 'Education', 'Entertainment', 'Shopping', 'Travel', 'Other'];
+  const budgetCategories = budgets?.map(b => b.category) || [];
+  const uniqueCategories = Array.from(new Set([...standardCategories, ...budgetCategories])).sort();
 
   const { register, handleSubmit, watch, formState: { errors }, reset, setValue } = useForm<TransactionFormData>({
     resolver: zodResolver(transactionSchema),
@@ -243,14 +250,9 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSuc
                 className={`w-full pl-4 pr-10 py-3 bg-slate-50 dark:bg-slate-800 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none appearance-none dark:text-white ${errors.category ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'}`}
               >
                  <option value="" disabled>Select Category</option>
-                 <option value="Food">🍽️ Food</option>
-                 <option value="Transport">🚗 Transport</option>
-                 <option value="Housing">🏠 Housing</option>
-                 <option value="Services">⚡ Services</option>
-                 <option value="Health">💊 Health</option>
-                 <option value="Education">📚 Education</option>
-                 <option value="Entertainment">🎬 Entertainment</option>
-                 <option value="Other">📦 Other</option>
+                 {uniqueCategories.map(cat => (
+                   <option key={cat} value={cat}>{cat}</option>
+                 ))}
               </select>
               <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
                 <ArrowDownCircle size={16} />

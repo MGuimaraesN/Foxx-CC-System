@@ -107,6 +107,8 @@ export interface DashboardStats {
   upcomingMaturities: number; 
   monthlyTrend: { month: string; amount: number; average: number }[];
   financialHealth: FinancialHealth;
+  expenseBreakdown?: { name: string; value: number }[];
+  dailyTrend?: { day: string; current: number; previous: number }[];
 }
 
 export interface NewsArticle {

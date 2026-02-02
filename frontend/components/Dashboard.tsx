@@ -40,22 +40,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
   };
 
   // Sunburst / Pie Logic
-  // Aggregate by category
+  const COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#6366f1', '#14b8a6'];
   const categoryData = React.useMemo(() => {
-      // Note: DashboardStats doesn't strictly have full transaction list, only aggregates.
-      // But assuming we might have access or if not, we use what we have.
-      // If we don't have raw transactions here, we can't do deep sunburst.
-      // However, the prompt asks for it in Dashboard.tsx.
-      // Let's implement a visual placeholder or use available data if user passed full transactions to dashboard (which isn't standard props).
-      // Since stats doesn't have it, we might need to skip or mock for now, OR rely on a new prop if we were to change `getDashboardStats`.
-      // Given constraints, I will implement a mocked visualization structure or use simple available data.
-      // Actually, let's assume we want to show this:
-      return [
-          { name: 'Housing', value: 400, color: '#8884d8' },
-          { name: 'Food', value: 300, color: '#82ca9d' },
-          { name: 'Transport', value: 300, color: '#ffc658' },
-          { name: 'Services', value: 200, color: '#ff8042' }
-      ];
+      if (!stats?.expenseBreakdown) return [];
+      return stats.expenseBreakdown.map((item, index) => ({
+          ...item,
+          color: COLORS[index % COLORS.length]
+      }));
   }, [stats]);
 
   if (isLoading && !stats) {
@@ -311,15 +302,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
             </div>
             <div className="flex-1 w-full relative">
                 <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={[
-                        { day: '1', current: 150, prevAvg: 120 },
-                        { day: '5', current: 400, prevAvg: 350 },
-                        { day: '10', current: 950, prevAvg: 800 },
-                        { day: '15', current: 1200, prevAvg: 1100 },
-                        { day: '20', current: 1800, prevAvg: 1600 },
-                        { day: '25', current: 2100, prevAvg: 2000 },
-                        { day: '30', current: null, prevAvg: 2400 },
-                    ]} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                    <AreaChart data={stats?.dailyTrend || []} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                         <defs>
                             <linearGradient id="colorCurrent" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
@@ -334,7 +317,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
                            formatter={(value: any) => isPrivate ? 'R$ ••••' : formatCurrency(value)}
                         />
                         <Area type="monotone" dataKey="current" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorCurrent)" />
-                        <Area type="monotone" dataKey="prevAvg" stroke="#94a3b8" strokeWidth={2} strokeDasharray="5 5" fill="none" />
+                        <Area type="monotone" dataKey="previous" stroke="#94a3b8" strokeWidth={2} strokeDasharray="5 5" fill="none" />
                     </AreaChart>
                 </ResponsiveContainer>
             </div>
