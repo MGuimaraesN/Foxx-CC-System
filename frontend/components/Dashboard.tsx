@@ -34,14 +34,6 @@ const StatCard: React.FC<{ title: string; value: string; icon: React.ReactNode; 
 export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency = 'BRL', isPrivate = false }) => {
   const { t } = useLanguage();
 
-  if (isLoading && !stats) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {[1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 p-6 animate-pulse" />)}
-      </div>
-    );
-  }
-
   const formatCurrency = (val: number) => {
     if (isPrivate) return 'R$ ••••';
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency }).format(val);
@@ -65,6 +57,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
           { name: 'Services', value: 200, color: '#ff8042' }
       ];
   }, [stats]);
+
+  if (isLoading && !stats) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {[1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 p-6 animate-pulse" />)}
+      </div>
+    );
+  }
 
   // Forecast Logic
   const now = new Date();

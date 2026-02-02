@@ -51,7 +51,12 @@ const AppContent: React.FC = () => {
   // Check Auth on Mount & Fix F5 Refresh Logic
   useEffect(() => {
     const authStatus = isAuthenticated();
-    setIsAuth(authStatus);
+    if (authStatus) {
+      setIsAuth(true);
+    } else {
+      setIsAuth(false);
+    }
+
     if (!authStatus && window.location.pathname !== '/' && window.location.pathname !== '/login') {
        setCurrentView('dashboard');
     }
@@ -60,11 +65,15 @@ const AppContent: React.FC = () => {
   // Update Profile when view changes (simple sync)
   useEffect(() => {
     if (isAuth) {
-        getUserProfile().then(profile => {
-          setUserProfile(profile);
-          if (profile.currency) setCurrency(profile.currency);
-          if (profile.language) setLanguage(profile.language as any);
-        });
+        getUserProfile()
+          .then(profile => {
+            setUserProfile(profile);
+            if (profile.currency) setCurrency(profile.currency);
+            if (profile.language) setLanguage(profile.language as any);
+          })
+          .catch(() => {
+             handleLogout();
+          });
     }
   }, [isAuth]);
 

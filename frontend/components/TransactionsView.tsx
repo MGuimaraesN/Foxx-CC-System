@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { TransactionTable } from './TransactionTable';
 import { Transaction, CreditCard, TransactionType, TransactionStatus } from '../types';
 import { Search, Filter, AlertCircle, Calendar, Tag as TagIcon, Check, ArrowUpCircle, ArrowDownCircle, Wallet, FileText, Sheet, Download, RefreshCw, Trash2, CheckCircle, X } from 'lucide-react';

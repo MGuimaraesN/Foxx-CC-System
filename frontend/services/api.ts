@@ -33,6 +33,7 @@ api.interceptors.response.use(
         } catch (refreshError) {
           localStorage.removeItem('cc_expense_auth_token');
           localStorage.removeItem('cc_expense_refresh_token');
+          // Force clear state and redirect
           window.location.href = '/';
         }
       }
