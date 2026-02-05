@@ -1,5 +1,5 @@
 import React from 'react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Line, ComposedChart, Bar, PieChart, Pie, Cell } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Line, ComposedChart, Bar, BarChart, PieChart, Pie, Cell } from 'recharts';
 import { CreditCard, TrendingUp, TrendingDown, AlertCircle, HeartPulse, Clock, Activity, AlertTriangle, PieChart as PieChartIcon } from 'lucide-react';
 import { DashboardStats } from '../types';
 import { Skeleton } from './ui/Skeleton';
