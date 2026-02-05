@@ -18,7 +18,7 @@ interface TransactionFormProps {
 // Zod Schema Validation
 const transactionSchema = z.object({
   description: z.string().min(3, "Description must be at least 3 characters"),
-  amount: z.number().positive("Amount must be greater than 0"),
+  amount: z.preprocess((val) => Number(val), z.number().positive("Amount must be greater than 0")),
   date: z.string().refine((val) => !isNaN(Date.parse(val)), "Invalid date"),
   category: z.string().min(2, "Category is required"),
   type: z.nativeEnum(TransactionType),
@@ -26,10 +26,10 @@ const transactionSchema = z.object({
   cardId: z.string().optional(),
   isRecurring: z.boolean(),
   recurrenceFrequency: z.nativeEnum(RecurrenceFrequency).optional(),
-  recurrenceEndDate: z.string().optional(),
+  recurrenceEndDate: z.string().optional().transform(e => e === "" ? undefined : e),
   isInstallment: z.boolean(),
-  totalInstallments: z.number().min(1).max(24).optional(),
-  installmentNumber: z.number().min(1).optional(),
+  totalInstallments: z.preprocess((val) => Number(val), z.number().min(1).max(24).optional().or(z.nan())),
+  installmentNumber: z.preprocess((val) => Number(val), z.number().min(1).optional().or(z.nan())),
   receiptUrl: z.string().optional(),
 });
 
@@ -140,9 +140,9 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSuc
       const payload = {
         ...data,
         amount: Number(data.amount),
-        date: new Date(data.date).toISOString(),
-        totalInstallments: Number(data.totalInstallments),
-        installmentNumber: Number(data.installmentNumber),
+        date: data.date ? new Date(data.date).toISOString() : new Date().toISOString(),
+        totalInstallments: data.totalInstallments ? Number(data.totalInstallments) : undefined,
+        installmentNumber: data.installmentNumber ? Number(data.installmentNumber) : undefined,
         currency: Currency.BRL,
         tags: tags,
         recurrenceEndDate: data.recurrenceEndDate ? new Date(data.recurrenceEndDate).toISOString() : undefined,
@@ -174,7 +174,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSuc
           </button>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="p-6 overflow-y-auto space-y-6">
+        <form onSubmit={handleSubmit(onSubmit, (errors) => console.error("Form Validation Errors:", errors))} className="p-6 overflow-y-auto space-y-6">
           
           {/* Top Row: Type and Status */}
           <div className="flex gap-4">
