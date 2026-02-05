@@ -105,7 +105,11 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
   // Derive unique tags from transactions
   const availableTags = useMemo(() => {
     const allTags = new Set<string>();
-    transactions.forEach(t => t.tags?.forEach(tag => allTags.add(tag)));
+    transactions.forEach(t => {
+      if (Array.isArray(t.tags)) {
+        t.tags.forEach(tag => allTags.add(tag));
+      }
+    });
     return Array.from(allTags);
   }, [transactions]);
 

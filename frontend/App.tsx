@@ -52,17 +52,23 @@ const AppContent: React.FC = () => {
 
   // Check Auth on Mount & Fix F5 Refresh Logic
   useEffect(() => {
-    const authStatus = isAuthenticated();
-    if (authStatus) {
-      setIsAuth(true);
-    } else {
-      setIsAuth(false);
-    }
+    try {
+      const authStatus = isAuthenticated();
+      if (authStatus) {
+        setIsAuth(true);
+      } else {
+        setIsAuth(false);
+      }
 
-    if (!authStatus && window.location.pathname !== '/' && window.location.pathname !== '/login') {
-       setCurrentView('dashboard');
+      if (!authStatus && window.location.pathname !== '/' && window.location.pathname !== '/login') {
+         setCurrentView('dashboard');
+      }
+    } catch (e) {
+      console.error("Auth check failed", e);
+      setIsAuth(false);
+    } finally {
+      setIsLoadingAuth(false);
     }
-    setIsLoadingAuth(false);
   }, []);
 
   // Update Profile when view changes (simple sync)
