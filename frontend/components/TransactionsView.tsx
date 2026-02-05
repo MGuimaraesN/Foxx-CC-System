@@ -232,139 +232,81 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
         </div>
       </div>
 
-      {/* Filter Bar */}
-      <div className="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 space-y-4">
+      {/* Filter Bar - Simplified Row */}
+      <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-wrap gap-3 items-center">
         
-        {/* Row 1: Primary Controls */}
-        <div className="flex flex-col xl:flex-row gap-4 justify-between">
-          <div className="flex items-center gap-3 w-full xl:w-2/3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-              <input
-                type="text"
-                placeholder={t('common.search')}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-all"
-              />
-            </div>
-
-            <div className="w-48">
-                <input
-                    type="text"
-                    placeholder={t('transactions.category')}
-                    value={categoryFilter}
-                    onChange={(e) => setCategoryFilter(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm dark:text-white"
-                />
-            </div>
-
-            <button
-                onClick={() => setIsExpanded(!isExpanded)}
-                className={`px-3 py-2 rounded-lg border text-sm font-medium flex items-center gap-2 transition-colors ${isExpanded ? 'bg-indigo-50 border-indigo-200 text-indigo-600 dark:bg-indigo-900/20 dark:border-indigo-800 dark:text-indigo-300' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'}`}
-            >
-                <Filter size={16} />
-                {t('common.filter')}
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2 w-full xl:w-auto justify-end">
-             {/* Action Group */}
-             <div className="flex rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
-                <button
-                    onClick={handleSyncBot}
-                    className="px-3 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border-r border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
-                    title={t('transactions.syncBot')}
-                >
-                    <RefreshCw size={18} className="text-indigo-500" />
-                </button>
-                <button
-                    onClick={handleExportPDF}
-                    className="px-3 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border-r border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
-                    title={t('transactions.exportPDF')}
-                >
-                    <FileText size={18} className="text-red-500" />
-                </button>
-                <button
-                    onClick={handleExportExcel}
-                    className="px-3 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
-                    title={t('transactions.exportExcel')}
-                >
-                    <Sheet size={18} className="text-emerald-500" />
-                </button>
-             </div>
-          </div>
+        {/* 1. Search */}
+        <div className="relative flex-grow min-w-[200px]">
+           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+           <input
+             type="text"
+             placeholder={t('common.search')}
+             value={searchTerm}
+             onChange={(e) => setSearchTerm(e.target.value)}
+             className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white text-sm"
+           />
         </div>
 
-        {/* Row 2: Expanded Filters */}
-        {isExpanded && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-4 border-t border-slate-100 dark:border-slate-700 animate-in slide-in-from-top-2">
-                <div className="relative">
-                    <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input
-                        type="date"
-                        value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
-                        className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm dark:text-white"
-                    />
-                </div>
+        {/* 2. Date Range */}
+        <div className="flex items-center gap-2">
+           <input
+             type="date"
+             value={startDate}
+             onChange={(e) => setStartDate(e.target.value)}
+             className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm dark:text-white"
+           />
+           <span className="text-slate-400">-</span>
+           <input
+             type="date"
+             value={endDate}
+             onChange={(e) => setEndDate(e.target.value)}
+             className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm dark:text-white"
+           />
+        </div>
 
-                <div className="relative">
-                    <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input
-                        type="date"
-                        value={endDate}
-                        onChange={(e) => setEndDate(e.target.value)}
-                        className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm dark:text-white"
-                    />
-                </div>
+        {/* 3. Category */}
+        <input
+            type="text"
+            placeholder={t('transactions.category')}
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="w-32 px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm dark:text-white"
+        />
 
-                <select
-                    value={cardFilter}
-                    onChange={(e) => setCardFilter(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm dark:text-white"
-                >
-                    <option value="ALL">{t('transactions.allCards')}</option>
-                    {cards.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
+        {/* 4. Status */}
+        <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as any)}
+            className="w-32 px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm dark:text-white"
+        >
+             <option value="ALL">Status: All</option>
+             <option value="PAID">Paid</option>
+             <option value="PENDING">Pending</option>
+        </select>
 
-                <div className="relative">
-                    <button
-                        onClick={() => setIsTagDropdownOpen(!isTagDropdownOpen)}
-                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-left flex items-center justify-between dark:text-white focus:ring-2 focus:ring-indigo-500"
-                    >
-                        <span className="truncate">
-                        {selectedTags.length === 0 ? t('transactions.tags') : `${selectedTags.length} ${t('transactions.selected')}`}
-                        </span>
-                        <TagIcon size={14} className="text-slate-400" />
-                    </button>
+        {/* 5. Clear Button */}
+        <button
+            onClick={() => {
+                setSearchTerm('');
+                setStartDate('');
+                setEndDate('');
+                setCategoryFilter('');
+                setStatusFilter('ALL');
+                setCardFilter('ALL');
+                setSelectedTags([]);
+            }}
+            className="px-3 py-2 text-slate-500 hover:text-red-500 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            title="Clear Filters"
+        >
+            <X size={18} />
+        </button>
 
-                    {isTagDropdownOpen && (
-                        <>
-                        <div className="fixed inset-0 z-10" onClick={() => setIsTagDropdownOpen(false)} />
-                        <div className="absolute z-20 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg max-h-48 overflow-y-auto p-2">
-                            {availableTags.length === 0 ? (
-                            <p className="text-xs text-slate-400 p-2 text-center">No tags available</p>
-                            ) : (
-                            availableTags.map(tag => (
-                                <div
-                                key={tag}
-                                onClick={() => toggleTag(tag)}
-                                className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm cursor-pointer transition-colors ${selectedTags.includes(tag) ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300' : 'hover:bg-slate-100 dark:hover:bg-slate-700 dark:text-slate-300'}`}
-                                >
-                                <div className={`w-4 h-4 rounded border flex items-center justify-center ${selectedTags.includes(tag) ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 dark:border-slate-600'}`}>
-                                    {selectedTags.includes(tag) && <Check size={10} />}
-                                </div>
-                                {tag}
-                                </div>
-                            ))
-                            )}
-                        </div>
-                        </>
-                    )}
-                </div>
-            </div>
-        )}
+        {/* Extra Actions (Sync/Export) - kept compact */}
+        <div className="flex border-l border-slate-200 dark:border-slate-700 pl-3 gap-1">
+             <button onClick={handleSyncBot} className="p-2 text-slate-500 hover:text-indigo-600 transition-colors" title={t('transactions.syncBot')}><RefreshCw size={18} /></button>
+             <button onClick={handleExportPDF} className="p-2 text-slate-500 hover:text-red-600 transition-colors" title="PDF"><FileText size={18} /></button>
+             <button onClick={handleExportExcel} className="p-2 text-slate-500 hover:text-emerald-600 transition-colors" title="Excel"><Sheet size={18} /></button>
+        </div>
       </div>
 
       <TransactionTable 

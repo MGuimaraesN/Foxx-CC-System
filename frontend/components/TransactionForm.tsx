@@ -391,7 +391,8 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSuc
                          <label className="block text-[10px] font-semibold text-slate-500 uppercase mb-1">Total</label>
                          <select 
                             {...register('totalInstallments', { valueAsNumber: true })}
-                            disabled={isEditing}
+                            // Only disable if editing an EXISTING installment. If converting single->installment (editing but !initialData.isInstallment), allow it.
+                            disabled={isEditing && initialData?.isInstallment}
                             className="w-full p-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-xs dark:text-white disabled:opacity-70"
                           >
                             {[2, 3, 4, 5, 6, 10, 12, 18, 24].map(n => (
@@ -404,7 +405,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSuc
                          <input
                             type="number"
                             {...register('installmentNumber', { valueAsNumber: true })}
-                            disabled={isEditing}
+                            disabled={isEditing && initialData?.isInstallment}
                             min={1}
                             className="w-full p-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-xs dark:text-white disabled:opacity-70"
                           />

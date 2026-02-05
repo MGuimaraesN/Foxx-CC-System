@@ -203,9 +203,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
                             nameKey="name"
                             cx="50%"
                             cy="50%"
-                            innerRadius={60}
-                            outerRadius={85}
-                            paddingAngle={5}
+                            innerRadius="60%"
+                            outerRadius="100%"
+                            paddingAngle={0}
+                            stroke="none"
                         >
                             {categoryData.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={entry.color} strokeWidth={0} />
@@ -240,8 +241,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
         </div>
 
         {/* Forecast Widget */}
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-center">
-            <div className="flex items-center gap-3 mb-6">
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-center h-[300px]">
+            <div className="flex items-center gap-3 mb-4">
                 <div className="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg text-indigo-600 dark:text-indigo-400">
                     <Activity size={24} />
                 </div>
@@ -251,7 +252,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
                 </div>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-4">
                 <div>
                     <p className="text-sm text-slate-500 mb-1">{t('dashboard.projectedTotal')}</p>
                     <p className="text-3xl font-bold text-slate-900 dark:text-white">{formatCurrency(projected)}</p>
@@ -279,47 +280,77 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
                         ></div>
                     </div>
                 </div>
-
-                <div className="p-4 bg-slate-50 dark:bg-slate-700/30 rounded-lg border border-slate-100 dark:border-slate-700/50">
-                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                        At your current daily spending of <strong>{formatCurrency(currentSpent / currentDay)}</strong>,
-                        you are {t('dashboard.onTrack')} {projected > avg ? t('dashboard.exceed') : t('dashboard.stayUnder')} your 3-month {t('dashboard.average')}.
-                    </p>
-                </div>
             </div>
         </div>
 
-        {/* Daily Spending Trend (New) */}
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col relative min-h-[400px]">
-             <div className="flex items-center gap-3 mb-6">
-                <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
-                    <TrendingUp size={24} />
+        {/* Charts Grid */}
+        <div className="col-span-1 lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Daily Spending Trend (New) */}
+            <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col relative h-[300px]">
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
+                        <TrendingUp size={24} />
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t('dashboard.dailyTrend')}</h3>
+                        <p className="text-xs text-slate-500">Accumulated Spend</p>
+                    </div>
                 </div>
-                <div>
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t('dashboard.dailyTrend')}</h3>
-                    <p className="text-xs text-slate-500">Accumulated Spend</p>
+                <div className="flex-1 w-full relative">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={stats?.dailyTrend || []} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                            <defs>
+                                <linearGradient id="colorCurrent" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" className="dark:stroke-slate-700" />
+                            <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                            <Tooltip
+                            contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
+                            formatter={(value: any) => isPrivate ? 'R$ ••••' : formatCurrency(value)}
+                            />
+                            <Area type="monotone" dataKey="current" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorCurrent)" />
+                            <Area type="monotone" dataKey="previous" stroke="#94a3b8" strokeWidth={2} strokeDasharray="5 5" fill="none" />
+                        </AreaChart>
+                    </ResponsiveContainer>
                 </div>
             </div>
-            <div className="flex-1 w-full relative">
-                <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={stats?.dailyTrend || []} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
-                        <defs>
-                            <linearGradient id="colorCurrent" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
-                                <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
-                            </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" className="dark:stroke-slate-700" />
-                        <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                        <Tooltip
-                           contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
-                           formatter={(value: any) => isPrivate ? 'R$ ••••' : formatCurrency(value)}
-                        />
-                        <Area type="monotone" dataKey="current" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorCurrent)" />
-                        <Area type="monotone" dataKey="previous" stroke="#94a3b8" strokeWidth={2} strokeDasharray="5 5" fill="none" />
-                    </AreaChart>
-                </ResponsiveContainer>
+
+            {/* Top Categories Bar Chart */}
+            <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col relative h-[300px]">
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg text-emerald-600 dark:text-emerald-400">
+                        <PieChartIcon size={24} />
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Top Categories</h3>
+                        <p className="text-xs text-slate-500">Highest Spend</p>
+                    </div>
+                </div>
+                <div className="flex-1 w-full relative">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={categoryData.slice(0, 5)} layout="vertical" margin={{ top: 0, right: 20, left: 20, bottom: 0 }}>
+                            <XAxis type="number" hide />
+                            <YAxis
+                                dataKey="name"
+                                type="category"
+                                axisLine={false}
+                                tickLine={false}
+                                width={80}
+                                tick={{ fill: '#64748b', fontSize: 12 }}
+                            />
+                            <Tooltip
+                            contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
+                            cursor={{ fill: 'transparent' }}
+                            formatter={(value: any) => isPrivate ? 'R$ ••••' : formatCurrency(value)}
+                            />
+                            <Bar dataKey="value" fill="#10b981" radius={[0, 4, 4, 0]} barSize={20} />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
             </div>
         </div>
       </div>

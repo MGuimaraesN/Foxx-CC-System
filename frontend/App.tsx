@@ -38,6 +38,7 @@ const NavItem: React.FC<{
 
 const AppContent: React.FC = () => {
   const [isAuth, setIsAuth] = useState(false);
+  const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('cc_dark_mode') === 'true');
   const [isPrivate, setIsPrivate] = useState(false);
   const [currency, setCurrency] = useState(() => localStorage.getItem('cc_currency') || 'BRL');
@@ -61,6 +62,7 @@ const AppContent: React.FC = () => {
     if (!authStatus && window.location.pathname !== '/' && window.location.pathname !== '/login') {
        setCurrentView('dashboard');
     }
+    setIsLoadingAuth(false);
   }, []);
 
   // Update Profile when view changes (simple sync)
@@ -233,6 +235,14 @@ const AppContent: React.FC = () => {
       case 'user': return 'Profile';
     }
   };
+
+  if (isLoadingAuth) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center bg-gray-50 dark:bg-slate-950">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
 
   if (!isAuth) {
     return (
