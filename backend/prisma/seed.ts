@@ -1,8 +1,16 @@
 import { PrismaClient } from '@prisma/client';
+import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
+import path from 'path';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
+import 'dotenv/config';
 
-const prisma = new PrismaClient();
+const dbPath = path.join(process.cwd(), 'prisma', 'dev.db');
+const adapter = new PrismaBetterSqlite3({
+  url: dbPath
+});
+
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log('🚀 Iniciando o processo de "Seed" (Populando o banco de dados)...');
