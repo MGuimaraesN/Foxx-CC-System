@@ -30,7 +30,7 @@ const transactionSchema = z.object({
   isInstallment: z.boolean(),
   totalInstallments: z.preprocess((val) => Number(val), z.number().min(1).max(24).optional().or(z.nan())),
   installmentNumber: z.preprocess((val) => Number(val), z.number().min(1).optional().or(z.nan())),
-  receiptUrl: z.string().optional(),
+  receiptUrl: z.string().nullable().optional(),
 });
 
 type TransactionFormData = z.infer<typeof transactionSchema>;

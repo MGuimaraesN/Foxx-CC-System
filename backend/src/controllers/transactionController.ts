@@ -210,7 +210,9 @@ export const updateTransaction = async (req: AuthRequest, res: Response) => {
         delete updateData.id;
         delete updateData.userId;
         delete updateData.createdAt;
-
+        delete updateData.card;
+        delete updateData.currency;
+        
         // Installment Conversion Logic (Single -> Multi)
         if (!tx.isInstallment && updateData.isInstallment && updateData.totalInstallments && updateData.totalInstallments > 1) {
              const groupId = uuidv4();
@@ -286,6 +288,7 @@ export const updateTransaction = async (req: AuthRequest, res: Response) => {
         });
 
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: 'Failed to update' });
     }
 };
