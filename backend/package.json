@@ -8,6 +8,8 @@
     "dev": "nodemon src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
+    "prisma:dev": "prisma migrate dev --name init",
+    "prisma:start": "prisma migrate deploy",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "prisma": {
@@ -32,7 +34,6 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@types/bcryptjs": "^3.0.0",
     "@types/better-sqlite3": "^7.6.13",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
@@ -44,5 +45,10 @@
     "prisma": "^7.3.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
+  },
+  "overrides": {
+    "hono": "^4.11.7",
+    "lodash": "^4.17.21",
+    "glob": "^13.0.0"
   }
 }

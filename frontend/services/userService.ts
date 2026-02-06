@@ -42,7 +42,8 @@ export const getUserProfile = async (): Promise<UserProfile> => {
     const response = await api.get('/auth/me');
     return response.data;
   } catch (error) {
-    return { name: 'Guest', email: '', avatarUrl: '' };
+    window.location.href = '/';
+    return null;
   }
 };
 
