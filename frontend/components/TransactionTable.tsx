@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Transaction, Currency, CreditCard, TransactionType, TransactionStatus } from '../types';
 import { Skeleton } from './ui/Skeleton';
-import { Repeat, Layers, Trash2, AlertTriangle, PlusCircle, Edit2, ArrowUpDown, ArrowUp, ArrowDown, ArrowUpCircle, ArrowDownCircle, CheckCircle, Clock, Globe } from 'lucide-react';
+import { Repeat, Layers, Trash2, AlertTriangle, PlusCircle, Edit2, ArrowUpDown, ArrowUp, ArrowDown, ArrowUpCircle, ArrowDownCircle, CheckCircle, Clock, Globe, Utensils, Car, Home, ShoppingBag, Heart, GraduationCap, Film, Plane, Coffee, Music, Wifi, Zap, Book, Briefcase, Gift, Smile, Tag, Smartphone, Laptop, Tv } from 'lucide-react';
 
 interface TransactionTableProps {
   transactions: Transaction[];
@@ -30,6 +30,43 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
   const formatDate = (iso: string) => {
     return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
   }
+
+  const getCategoryIcon = (category: string) => {
+    const lower = category.toLowerCase();
+    // Food / Alimentação
+    if (lower.includes('food') || lower.includes('restaurant') || lower.includes('dinner') || lower.includes('lunch') || lower.includes('alimentação') || lower.includes('restaurante')) return <Utensils size={16} />;
+    // Transport / Transporte
+    if (lower.includes('transport') || lower.includes('uber') || lower.includes('gas') || lower.includes('fuel')) return <Car size={16} />;
+    // Housing / Casa
+    if (lower.includes('housing') || lower.includes('rent') || lower.includes('home') || lower.includes('casa') || lower.includes('aluguel')) return <Home size={16} />;
+    // Shopping / Compras
+    if (lower.includes('shopping') || lower.includes('market') || lower.includes('store') || lower.includes('clothes') || lower.includes('mercado') || lower.includes('loja')) return <ShoppingBag size={16} />;
+    // Health / Saúde
+    if (lower.includes('health') || lower.includes('doctor') || lower.includes('pharmacy') || lower.includes('saúde') || lower.includes('medico') || lower.includes('farmacia')) return <Heart size={16} />;
+    // Education / Educação
+    if (lower.includes('education') || lower.includes('school') || lower.includes('course') || lower.includes('educação') || lower.includes('escola') || lower.includes('curso')) return <GraduationCap size={16} />;
+    // Entertainment / Lazer
+    if (lower.includes('entertainment') || lower.includes('movie') || lower.includes('fun') || lower.includes('lazer') || lower.includes('cinema') || lower.includes('diversão')) return <Film size={16} />;
+    // Travel / Viagem
+    if (lower.includes('travel') || lower.includes('trip') || lower.includes('hotel') || lower.includes('flight') || lower.includes('viagem') || lower.includes('ferias')) return <Plane size={16} />;
+    // Technology / Tecnologia
+    if (lower.includes('tech') || lower.includes('computer') || lower.includes('phone') || lower.includes('tecnologia') || lower.includes('celular') || lower.includes('eletronico')) return <Smartphone size={16} />;
+    // Subscriptions / Assinaturas
+    if (lower.includes('subscription') || lower.includes('netflix') || lower.includes('spotify') || lower.includes('assinatura') || lower.includes('stream')) return <Tv size={16} />;
+    // Work / Trabalho
+    if (lower.includes('work') || lower.includes('business') || lower.includes('trabalho') || lower.includes('salario') || lower.includes('freela')) return <Briefcase size={16} />;
+
+    // Misc
+    if (lower.includes('coffee') || lower.includes('cafe')) return <Coffee size={16} />;
+    if (lower.includes('music')) return <Music size={16} />;
+    if (lower.includes('internet') || lower.includes('wifi')) return <Wifi size={16} />;
+    if (lower.includes('electric') || lower.includes('power') || lower.includes('light') || lower.includes('luz') || lower.includes('energia')) return <Zap size={16} />;
+    if (lower.includes('book') || lower.includes('reading') || lower.includes('livro')) return <Book size={16} />;
+    if (lower.includes('gift') || lower.includes('present') || lower.includes('presente')) return <Gift size={16} />;
+    if (lower.includes('personal') || lower.includes('care') || lower.includes('pessoal')) return <Smile size={16} />;
+
+    return <Tag size={16} />;
+  };
 
   const handleDeleteClick = (id: string) => setDeleteConfirmId(id);
   
@@ -137,6 +174,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
                     />
                   </th>
                 )}
+                <th className="px-4 py-4 w-10 text-center"></th> {/* Icon Column */}
                 <th className="px-6 py-4 w-12 text-center">Type</th>
                 <th className="px-6 py-4 w-24">Status</th>
                 <th 
@@ -177,6 +215,11 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
                       />
                     </td>
                   )}
+                  <td className="px-4 py-4 text-center text-slate-400 dark:text-slate-500">
+                    <div className="flex items-center justify-center p-2 rounded-lg bg-slate-100 dark:bg-slate-700/50">
+                       {getCategoryIcon(t.category)}
+                    </div>
+                  </td>
                   <td className="px-6 py-4 text-center">
                      {t.type === TransactionType.INCOME ? (
                        <div className="inline-flex p-1.5 rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
