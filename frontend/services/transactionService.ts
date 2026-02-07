@@ -78,6 +78,11 @@ export const createBudget = async (budget: Partial<Budget>): Promise<Budget> => 
   return response.data;
 };
 
+export const updateBudget = async (budget: Partial<Budget> & { id: string }): Promise<Budget> => {
+  const response = await api.put(`/budgets/${budget.id}`, budget);
+  return response.data;
+};
+
 export const deleteBudget = async (id: string): Promise<void> => {
   await api.delete(`/budgets/${id}`);
 };
