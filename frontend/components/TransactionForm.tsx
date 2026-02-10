@@ -47,10 +47,10 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSuc
 
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
-  // Merge standard categories with budget categories
-  const standardCategories = ['Food', 'Transport', 'Housing', 'Services', 'Health', 'Education', 'Entertainment', 'Shopping', 'Travel', 'Other'];
+  // Use budgets for categories, but also keep the initial category if it's not in the list (for editing legacy data)
   const budgetCategories = budgets?.map(b => b.category) || [];
-  const uniqueCategories = Array.from(new Set([...standardCategories, ...budgetCategories])).sort();
+  const initialCategory = initialData?.category;
+  const uniqueCategories = Array.from(new Set([...budgetCategories, ...(initialCategory ? [initialCategory] : [])])).sort();
 
   const { register, handleSubmit, watch, formState: { errors }, reset, setValue } = useForm<TransactionFormData>({
     resolver: zodResolver(transactionSchema),

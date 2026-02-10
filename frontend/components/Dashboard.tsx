@@ -13,7 +13,7 @@ interface DashboardProps {
 }
 
 const StatCard: React.FC<{ title: string; value: string; icon: React.ReactNode; subtext?: string; loading: boolean; colorClass?: string }> = ({ title, value, icon, subtext, loading, colorClass }) => (
-  <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
+  <div className="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
     <div className="flex justify-between items-start">
       <div>
         <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{title}</p>
@@ -51,8 +51,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
 
   if (isLoading && !stats) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {[1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 p-6 animate-pulse" />)}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {[1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 p-5 animate-pulse" />)}
       </div>
     );
   }
@@ -73,7 +73,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
   const pacePercentage = Math.min(100, (currentDay / daysInMonth) * 100);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       
       {/* Financial Health Banner */}
       {stats?.financialHealth && (
@@ -96,7 +96,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard 
           title={t('dashboard.openInvoice')}
           value={formatCurrency(stats?.openInvoice || 0)} 
@@ -139,8 +139,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 h-[400px] flex flex-col relative">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 h-[350px] flex flex-col relative">
             <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t('dashboard.expenseVsAvg')}</h3>
             <div className="flex items-center gap-4 text-xs text-slate-500">
@@ -184,7 +184,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
         </div>
 
         {/* Expense Breakdown (Donut Chart) */}
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col relative min-h-[300px]">
+        <div className="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col relative min-h-[280px]">
              <div className="flex items-center gap-3 mb-6">
                 <div className="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg text-indigo-600 dark:text-indigo-400">
                     <PieChartIcon size={24} />
@@ -241,7 +241,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
         </div>
 
         {/* Forecast Widget */}
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-center h-[300px]">
+        <div className="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-center h-[280px]">
             <div className="flex items-center gap-3 mb-4">
                 <div className="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg text-indigo-600 dark:text-indigo-400">
                     <Activity size={24} />
@@ -284,9 +284,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
         </div>
 
         {/* Charts Grid */}
-        <div className="col-span-1 lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="col-span-1 lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Daily Spending Trend (New) */}
-            <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col relative h-[300px]">
+            <div className="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col relative h-[280px]">
                 <div className="flex items-center gap-3 mb-6">
                     <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
                         <TrendingUp size={24} />
@@ -320,7 +320,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
             </div>
 
             {/* Top Categories Bar Chart */}
-            <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col relative h-[300px]">
+            <div className="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col relative h-[280px]">
                 <div className="flex items-center gap-3 mb-6">
                     <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg text-emerald-600 dark:text-emerald-400">
                         <PieChartIcon size={24} />

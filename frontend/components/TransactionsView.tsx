@@ -205,6 +205,10 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       
+      <div className="flex justify-between items-center">
+         <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t('transactions.title')}</h2>
+      </div>
+
       {/* Financial Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between">
