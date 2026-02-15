@@ -125,6 +125,51 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
   };
 
   const sortedTransactions = getSortedTransactions();
+  const headerCells = [
+    onSelectAll ? (
+      <th key="select-all" className="px-4 py-4 w-10 text-center">
+        <input
+          type="checkbox"
+          className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+          checked={transactions.length > 0 && selectedIds.length === transactions.length}
+          onChange={(e) => onSelectAll(e.target.checked)}
+        />
+      </th>
+    ) : null,
+    <th key="icon" className="px-4 py-4 w-10 text-center"></th>,
+    <th key="type" className="px-6 py-4 w-12 text-center">{t('transactions.tableType')}</th>,
+    <th key="status" className="px-6 py-4 w-24">{t('transactions.tableStatus')}</th>,
+    (
+      <th
+        key="date"
+        className="px-6 py-4 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+        onClick={() => handleSort('date')}
+      >
+        <div className="flex items-center">{t('transactions.tableDate')} {renderSortIcon('date')}</div>
+      </th>
+    ),
+    (
+      <th
+        key="description"
+        className="px-6 py-4 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+        onClick={() => handleSort('description')}
+      >
+        <div className="flex items-center">{t('transactions.tableDescription')} {renderSortIcon('description')}</div>
+      </th>
+    ),
+    <th key="card" className="px-6 py-4">{t('transactions.tableCard')}</th>,
+    <th key="tags" className="px-6 py-4">{t('transactions.tableTags')}</th>,
+    (
+      <th
+        key="amount"
+        className="px-6 py-4 text-right cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+        onClick={() => handleSort('amount')}
+      >
+        <div className="flex items-center justify-end">{t('transactions.tableAmount')} {renderSortIcon('amount')}</div>
+      </th>
+    ),
+    (onDelete || onEdit) ? <th key="actions" className="px-6 py-4 text-center w-24">{t('transactions.tableActions')}</th> : null,
+  ].filter(Boolean) as React.ReactNode[];
 
   if (loading && transactions.length === 0) {
     return (
@@ -165,42 +210,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 text-xs uppercase font-medium">
-              <tr>
-                {onSelectAll && (
-                  <th className="px-4 py-4 w-10 text-center">
-                    <input
-                      type="checkbox"
-                      className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                      checked={transactions.length > 0 && selectedIds.length === transactions.length}
-                      onChange={(e) => onSelectAll(e.target.checked)}
-                    />
-                  </th>
-                )}
-                <th className="px-4 py-4 w-10 text-center"></th> {/* Icon Column */}
-                <th className="px-6 py-4 w-12 text-center">{t('transactions.tableType')}</th>
-                <th className="px-6 py-4 w-24">{t('transactions.tableStatus')}</th>
-                <th 
-                  className="px-6 py-4 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
-                  onClick={() => handleSort('date')}
-                >
-                  <div className="flex items-center">{t('transactions.tableDate')} {renderSortIcon('date')}</div>
-                </th>
-                <th 
-                  className="px-6 py-4 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
-                  onClick={() => handleSort('description')}
-                >
-                  <div className="flex items-center">{t('transactions.tableDescription')} {renderSortIcon('description')}</div>
-                </th>
-                <th className="px-6 py-4">{t('transactions.tableCard')}</th>
-                <th className="px-6 py-4">{t('transactions.tableTags')}</th>
-                <th 
-                  className="px-6 py-4 text-right cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
-                  onClick={() => handleSort('amount')}
-                >
-                  <div className="flex items-center justify-end">{t('transactions.tableAmount')} {renderSortIcon('amount')}</div>
-                </th>
-                {(onDelete || onEdit) && <th className="px-6 py-4 text-center w-24">{t('transactions.tableActions')}</th>}
-              </tr>
+              <tr>{headerCells}</tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
               {sortedTransactions.map((transaction) => {

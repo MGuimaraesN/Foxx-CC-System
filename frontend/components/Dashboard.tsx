@@ -176,7 +176,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
             {isLoading ? (
             <Skeleton className="w-full h-full" />
             ) : (
-            <div className="flex-1 w-full min-h-0 relative">
+            <div className="flex-1 w-full min-h-[220px] min-w-0 relative">
                 <div className="absolute inset-0">
                 <ResponsiveContainer width="100%" height="100%">
                     <ComposedChart 
@@ -248,7 +248,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
                     <p className="text-xs text-slate-500">{t('transactions.category')}</p>
                 </div>
             </div>
-            <div className="flex-1 w-full relative">
+            <div className="flex-1 w-full min-h-[200px] min-w-0 relative">
               <div className="absolute inset-0 z-10">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -309,7 +309,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
                         <p className="text-xs text-slate-500">{t('dashboard.accumulatedSpend')}</p>
                     </div>
                 </div>
-                <div className="flex-1 w-full relative">
+                <div className="flex-1 w-full min-h-[200px] min-w-0 relative">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={stats?.dailyTrend || []}>
                         <defs>
@@ -347,7 +347,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
                         <p className="text-xs text-slate-500">{t('dashboard.highestSpend')}</p>
                     </div>
                 </div>
-                <div className="flex-1 w-full relative">
+                <div className="flex-1 w-full min-h-[200px] min-w-0 relative">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={categoryData.slice(0, 5)} layout="vertical" margin={{ top: 0, right: 20, left: 20, bottom: 0 }} barCategoryGap={14}>
                         <defs>
