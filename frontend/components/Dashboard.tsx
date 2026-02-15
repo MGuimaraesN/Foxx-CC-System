@@ -155,7 +155,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
             <div className="flex-1 w-full min-h-0 relative">
                 <div className="absolute inset-0">
                 <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={stats?.monthlyTrend} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
+                    <ComposedChart data={stats?.monthlyTrend}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" className="dark:stroke-slate-700" />
                     <XAxis
                         dataKey="month"
@@ -174,8 +174,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
                         contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
                         formatter={(value: any) => isPrivate ? 'R$ ••••' : formatCurrency(value)}
                     />
-                    <Bar dataKey="amount" fill="#8b5cf6" radius={[12, 12, 0, 0]} />
-                    <Line type="monotone" dataKey="average" stroke="#34d399" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} strokeDasharray="5 5" />
+                    <Bar dataKey="amount" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={40} />
+                    <Line type="monotone" dataKey="average" stroke="#34d399" strokeWidth={2} strokeDasharray="5 5" />
                     </ComposedChart>
                 </ResponsiveContainer>
                 </div>
@@ -205,8 +205,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
                             cy="50%"
                             innerRadius="60%"
                             outerRadius="100%"
-                            paddingAngle={4}
-                            cornerRadius={8}
                             stroke="none"
                         >
                             {categoryData.map((entry, index) => (
@@ -299,10 +297,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
                 </div>
                 <div className="flex-1 w-full relative">
                     <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={stats?.dailyTrend || []} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                        <AreaChart data={stats?.dailyTrend || []}>
                             <defs>
                                 <linearGradient id="colorCurrent" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4}/>
+                                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
                                     <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
                                 </linearGradient>
                             </defs>
@@ -348,7 +346,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
                             cursor={{ fill: 'transparent' }}
                             formatter={(value: any) => isPrivate ? 'R$ ••••' : formatCurrency(value)}
                             />
-                            <Bar dataKey="value" fill="#10b981" radius={[0, 12, 12, 0]} barSize={32} />
+                            <Bar dataKey="value" fill="#10b981" radius={[0, 4, 4, 0]} barSize={20} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
