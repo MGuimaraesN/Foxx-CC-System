@@ -88,8 +88,8 @@ const AppContent: React.FC = () => {
 
   // Data State via React Query Hooks
   const deleteMutation = useDeleteTransaction({
-    onSuccess: () => toast.success('Transaction deleted successfully'),
-    onError: () => toast.error('Failed to delete transaction'),
+    onSuccess: () => toast.success(t('transactions.transactionDeleted')),
+    onError: () => toast.error(t('transactions.deleteFailed')),
   });
 
   const { data: transactionsData = [], isLoading: loadingTransactions, isError, error } = useTransactions({ enabled: isAuth });
@@ -127,7 +127,7 @@ const AppContent: React.FC = () => {
   }, [darkMode]);
 
   const handleCreateSuccess = () => {
-    toast.success(editingTransaction ? 'Transaction updated successfully' : 'Transaction saved successfully');
+    toast.success(editingTransaction ? t('transactions.transactionUpdated') : t('transactions.transactionSaved'));
     setEditingTransaction(null);
   };
 
@@ -143,7 +143,7 @@ const AppContent: React.FC = () => {
   const handleLogout = () => {
     logout();
     setIsAuth(false);
-    toast.info('Logged out successfully');
+    toast.info(t('common.logoutSuccess'));
   };
 
   const renderContent = () => {
@@ -233,12 +233,12 @@ const AppContent: React.FC = () => {
       case 'dashboard': return t('dashboard.title');
       case 'transactions': return t('transactions.title');
       case 'cards': return t('transactions.allCards');
-      case 'budgets': return 'Budgets';
-      case 'goals': return 'Goals';
-      case 'news': return 'News';
-      case 'import': return 'Import';
+      case 'budgets': return t('nav.budgets');
+      case 'goals': return t('nav.goals');
+      case 'news': return t('nav.newsAi');
+      case 'import': return t('nav.importData');
       case 'settings': return t('settings.title');
-      case 'user': return 'Profile';
+      case 'user': return t('nav.profile');
     }
   };
 
@@ -281,49 +281,49 @@ const AppContent: React.FC = () => {
             onClick={() => handleNavClick('dashboard')} 
             active={currentView === 'dashboard'} 
             icon={<LayoutDashboard size={20} />} 
-            label="Dashboard" 
+            label={t('nav.dashboard')} 
           />
           <NavItem 
             onClick={() => handleNavClick('transactions')} 
             active={currentView === 'transactions'} 
             icon={<Receipt size={20} />} 
-            label="Transactions" 
+            label={t('nav.transactions')} 
           />
           <NavItem 
             onClick={() => handleNavClick('cards')} 
             active={currentView === 'cards'} 
             icon={<CreditCard size={20} />} 
-            label="Cards" 
+            label={t('nav.cards')} 
           />
           <NavItem 
             onClick={() => handleNavClick('budgets')} 
             active={currentView === 'budgets'} 
             icon={<PieChart size={20} />} 
-            label="Budgets" 
+            label={t('nav.budgets')} 
           />
           <NavItem
             onClick={() => handleNavClick('goals')}
             active={currentView === 'goals'}
             icon={<Target size={20} />}
-            label="Goals"
+            label={t('nav.goals')}
           />
           <NavItem 
             onClick={() => handleNavClick('news')} 
             active={currentView === 'news'} 
             icon={<Newspaper size={20} />} 
-            label="News & AI" 
+            label={t('nav.newsAi')} 
           />
           <NavItem 
             onClick={() => handleNavClick('import')} 
             active={currentView === 'import'} 
             icon={<Upload size={20} />} 
-            label="Import Data" 
+            label={t('nav.importData')} 
           />
           <NavItem 
             onClick={() => handleNavClick('settings')} 
             active={currentView === 'settings'} 
             icon={<Settings size={20} />} 
-            label="Settings" 
+            label={t('nav.settings')} 
           />
         </nav>
       </div>
@@ -338,7 +338,7 @@ const AppContent: React.FC = () => {
              )}
            </div>
            <div className="flex-1 min-w-0">
-             <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{userProfile.name || 'User'}</p>
+             <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{userProfile.name || t('user.defaultName')}</p>
              <p className="text-xs text-slate-500 truncate">{userProfile.email}</p>
            </div>
            <button onClick={(e) => { e.stopPropagation(); handleLogout(); }} className="text-slate-400 hover:text-red-500 transition-colors">
@@ -392,7 +392,7 @@ const AppContent: React.FC = () => {
               <button
                 onClick={() => setIsPrivate(!isPrivate)}
                 className="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                title={isPrivate ? "Disable Privacy Mode" : "Enable Privacy Mode"}
+                title={isPrivate ? t('common.disablePrivacy') : t('common.enablePrivacy')}
               >
                 {isPrivate ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
@@ -409,7 +409,7 @@ const AppContent: React.FC = () => {
                 className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 md:px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 shadow-lg shadow-indigo-500/20 transition-all hover:scale-105 active:scale-95"
               >
                 <Plus size={18} />
-                <span className="hidden sm:inline">Add Expense</span>
+                <span className="hidden sm:inline">{t('common.addExpense')}</span>
               </button>
             </div>
           </header>

@@ -25,20 +25,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const handleCurrencyChange = async (newCurrency: string) => {
     setCurrency(newCurrency);
     await updateUserSettings({ currency: newCurrency });
-    toast.success('Currency updated');
+    toast.success(t('settings.currencyUpdated'));
   };
 
   const handleLanguageChange = async (newLanguage: string) => {
     setLanguage(newLanguage);
     setContextLanguage(newLanguage as any);
     await updateUserSettings({ language: newLanguage });
-    toast.success('Language updated');
+    toast.success(t('settings.languageUpdated'));
   };
 
   const handleWhatsappSave = async () => {
     if (!whatsappPhone) return;
     await updateUserSettings({ whatsappPhone });
-    toast.success('WhatsApp number saved');
+    toast.success(t('settings.whatsappSaved'));
   };
 
   const handleRestore = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,20 +55,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             resolve('Data restored!');
             setTimeout(() => window.location.reload(), 1500);
           } else {
-            reject(new Error('Invalid backup file structure'));
+            reject(new Error(t('settings.invalidBackup')));
           }
         } catch (err) {
           reject(err);
         }
       };
-      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.onerror = () => reject(new Error(t('settings.readFileFailed')));
       reader.readAsText(file);
     });
 
     toast.promise(promise, {
-      loading: 'Validating and restoring data...',
-      success: 'System restored successfully! Reloading...',
-      error: (err) => `Restore failed: ${err.message}`
+      loading: t('settings.restoreLoading'),
+      success: t('settings.restoreSuccess'),
+      error: (err) => t('settings.restoreFailed').replace('{message}', err.message)
     });
     
     // Reset input
@@ -88,11 +88,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         <div className="p-6 space-y-6">
            <div className="flex gap-4 flex-col md:flex-row">
               <div className="flex-1">
-                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">WhatsApp Number</label>
+                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('settings.whatsappNumber')}</label>
                  <div className="flex gap-2">
                    <input
                       type="text"
-                      placeholder="e.g. 5562999999999"
+                     placeholder={t('settings.whatsappPlaceholder')}
                       value={whatsappPhone}
                       onChange={(e) => setWhatsappPhone(e.target.value)}
                       className="flex-1 px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:text-white"
@@ -104,16 +104,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                      {t('common.save')}
                    </button>
                  </div>
-                 <p className="text-xs text-slate-500 mt-2">Enter your number with country code (e.g., 55 for Brazil) to link your account.</p>
+                  <p className="text-xs text-slate-500 mt-2">{t('settings.whatsappHint')}</p>
               </div>
               <div className="flex-1 p-4 bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/30 rounded-lg">
                  <h4 className="font-semibold text-emerald-800 dark:text-emerald-400 text-sm mb-2 flex items-center gap-2">
-                    <MessageSquare size={16} /> How to use
+                    <MessageSquare size={16} /> {t('settings.howToUse')}
                  </h4>
                  <ul className="space-y-2 text-xs text-emerald-700 dark:text-emerald-500">
-                    <li>• "Spent 50 at Bakery with Nubank"</li>
-                    <li>• "R$ 120 Uber" (Defaults to Pending/Credit)</li>
-                    <li>• "Paid 500 rent" (Marked as Paid)</li>
+                    <li>• {t('settings.howToExample1')}</li>
+                    <li>• {t('settings.howToExample2')}</li>
+                    <li>• {t('settings.howToExample3')}</li>
                  </ul>
               </div>
            </div>
@@ -134,16 +134,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
              </div>
              <div className="flex-1">
                <h4 className="font-semibold text-slate-900 dark:text-white">{t('settings.backup')}</h4>
-               <p className="text-sm text-slate-500 dark:text-slate-400">Download all your data (Transactions, Cards, Profile) as a JSON file.</p>
+               <p className="text-sm text-slate-500 dark:text-slate-400">{t('settings.backupDesc')}</p>
              </div>
              <button 
                onClick={() => {
                  generateBackup();
-                 toast.success('Backup file generated');
+                 toast.success(t('settings.backupGenerated'));
                }}
                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors"
              >
-               <Download size={16} /> Export JSON
+               <Download size={16} /> {t('settings.exportJson')}
              </button>
           </div>
 
@@ -153,9 +153,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
              </div>
              <div className="flex-1">
                <h4 className="font-semibold text-slate-900 dark:text-white">{t('settings.restore')}</h4>
-               <p className="text-sm text-slate-500 dark:text-slate-400">Overwrite current data with a backup file.</p>
+               <p className="text-sm text-slate-500 dark:text-slate-400">{t('settings.restoreDesc')}</p>
                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
-                 <AlertTriangle size={10} /> This action cannot be undone.
+                 <AlertTriangle size={10} /> {t('settings.restoreWarning')}
                </p>
              </div>
              <input 
@@ -169,7 +169,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                onClick={() => fileInputRef.current?.click()}
                className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
              >
-               <Upload size={16} /> Import Backup
+               <Upload size={16} /> {t('settings.importBackup')}
              </button>
           </div>
         </div>
@@ -186,7 +186,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium text-slate-900 dark:text-white">{t('settings.darkMode')}</p>
-              <p className="text-sm text-slate-500">Switch between light and dark themes</p>
+              <p className="text-sm text-slate-500">{t('settings.themeHint')}</p>
             </div>
             <button 
               onClick={() => setDarkMode(!darkMode)}
@@ -214,9 +214,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                  onChange={(e) => handleCurrencyChange(e.target.value)}
                  className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:text-white"
                >
-                 <option value="BRL">Real Brasileiro (BRL)</option>
-                 <option value="USD">US Dollar (USD)</option>
-                 <option value="EUR">Euro (EUR)</option>
+                   <option value="BRL">{t('settings.currencyBRL')}</option>
+                   <option value="USD">{t('settings.currencyUSD')}</option>
+                   <option value="EUR">{t('settings.currencyEUR')}</option>
                </select>
              </div>
              <div>
@@ -226,8 +226,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                  onChange={(e) => handleLanguageChange(e.target.value)}
                  className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:text-white"
                >
-                 <option value="en">English</option>
-                 <option value="pt-BR">Português</option>
+                   <option value="en">{t('settings.languageEnglish')}</option>
+                   <option value="pt-BR">{t('settings.languagePortuguese')}</option>
                </select>
              </div>
           </div>

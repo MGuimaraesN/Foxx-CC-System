@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Transaction, Currency, CreditCard, TransactionType, TransactionStatus } from '../types';
 import { Skeleton } from './ui/Skeleton';
 import { Repeat, Layers, Trash2, AlertTriangle, PlusCircle, Edit2, ArrowUpDown, ArrowUp, ArrowDown, ArrowUpCircle, ArrowDownCircle, CheckCircle, Clock, Globe, Utensils, Car, Home, ShoppingBag, Heart, GraduationCap, Film, Plane, Coffee, Music, Wifi, Zap, Book, Briefcase, Gift, Smile, Tag, Smartphone, Laptop, Tv } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 interface TransactionTableProps {
   transactions: Transaction[];
@@ -22,14 +23,15 @@ type SortKey = 'date' | 'amount' | 'description';
 type SortDirection = 'asc' | 'desc';
 
 export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions, loading, cards, onDelete, onEdit, onStatusToggle, isDeleting, currency = 'BRL', isPrivate = false, selectedIds = [], onSelect, onSelectAll }) => {
+  const { t, language } = useLanguage();
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: SortDirection } | null>(null);
 
   const getCardName = (id?: string) => cards.find(c => c.id === id)?.name || '-';
   
   const formatDate = (iso: string) => {
-    return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
-  }
+    return new Date(iso).toLocaleDateString(language === 'en' ? 'en-US' : language, { day: '2-digit', month: 'short' });
+  };
 
   const getCategoryIcon = (category: string) => {
     const lower = category.toLowerCase();
@@ -143,9 +145,9 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
         <div className="w-16 h-16 bg-slate-50 dark:bg-slate-700/50 rounded-full flex items-center justify-center mb-4">
           <PlusCircle size={32} className="text-slate-400 dark:text-slate-500" />
         </div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No transactions found</h3>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">{t('transactions.noTransactions')}</h3>
         <p className="text-slate-500 dark:text-slate-400 max-w-sm mb-6">
-          Try adjusting your filters or add a new expense to get started.
+          {t('transactions.noTransactionsHint')}
         </p>
       </div>
     );
@@ -155,9 +157,9 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
     <>
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden relative">
         <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Transactions</h3>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t('transactions.title')}</h3>
           <span className="text-xs font-medium px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded-md text-slate-600 dark:text-slate-300">
-            {transactions.length} records
+            {transactions.length} {t('common.records')}
           </span>
         </div>
         <div className="overflow-x-auto">
@@ -175,53 +177,53 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
                   </th>
                 )}
                 <th className="px-4 py-4 w-10 text-center"></th> {/* Icon Column */}
-                <th className="px-6 py-4 w-12 text-center">Type</th>
-                <th className="px-6 py-4 w-24">Status</th>
+                <th className="px-6 py-4 w-12 text-center">{t('transactions.tableType')}</th>
+                <th className="px-6 py-4 w-24">{t('transactions.tableStatus')}</th>
                 <th 
                   className="px-6 py-4 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                   onClick={() => handleSort('date')}
                 >
-                  <div className="flex items-center">Date {renderSortIcon('date')}</div>
+                  <div className="flex items-center">{t('transactions.tableDate')} {renderSortIcon('date')}</div>
                 </th>
                 <th 
                   className="px-6 py-4 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                   onClick={() => handleSort('description')}
                 >
-                  <div className="flex items-center">Description {renderSortIcon('description')}</div>
+                  <div className="flex items-center">{t('transactions.tableDescription')} {renderSortIcon('description')}</div>
                 </th>
-                <th className="px-6 py-4">Card / Method</th>
-                <th className="px-6 py-4">Tags</th>
+                <th className="px-6 py-4">{t('transactions.tableCard')}</th>
+                <th className="px-6 py-4">{t('transactions.tableTags')}</th>
                 <th 
                   className="px-6 py-4 text-right cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                   onClick={() => handleSort('amount')}
                 >
-                  <div className="flex items-center justify-end">Amount {renderSortIcon('amount')}</div>
+                  <div className="flex items-center justify-end">{t('transactions.tableAmount')} {renderSortIcon('amount')}</div>
                 </th>
-                {(onDelete || onEdit) && <th className="px-6 py-4 text-center w-24">Actions</th>}
+                {(onDelete || onEdit) && <th className="px-6 py-4 text-center w-24">{t('transactions.tableActions')}</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-              {sortedTransactions.map((t) => {
-                const isSelected = selectedIds.includes(t.id);
+              {sortedTransactions.map((transaction) => {
+                const isSelected = selectedIds.includes(transaction.id);
                 return (
-                <tr key={t.id} className={`transition-colors group ${isSelected ? 'bg-indigo-50/50 dark:bg-indigo-900/10' : 'hover:bg-slate-50 dark:hover:bg-slate-700/50'}`}>
+                <tr key={transaction.id} className={`transition-colors group ${isSelected ? 'bg-indigo-50/50 dark:bg-indigo-900/10' : 'hover:bg-slate-50 dark:hover:bg-slate-700/50'}`}>
                   {onSelect && (
                     <td className="px-4 py-4 text-center">
                       <input
                         type="checkbox"
                         className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                         checked={isSelected}
-                        onChange={() => onSelect(t.id)}
+                        onChange={() => onSelect(transaction.id)}
                       />
                     </td>
                   )}
                   <td className="px-4 py-4 text-center text-slate-400 dark:text-slate-500">
                     <div className="flex items-center justify-center p-2 rounded-lg bg-slate-100 dark:bg-slate-700/50">
-                       {getCategoryIcon(t.category)}
+                       {getCategoryIcon(transaction.category)}
                     </div>
                   </td>
                   <td className="px-6 py-4 text-center">
-                     {t.type === TransactionType.INCOME ? (
+                     {transaction.type === TransactionType.INCOME ? (
                        <div className="inline-flex p-1.5 rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
                          <ArrowUpCircle size={16} />
                        </div>
@@ -233,56 +235,56 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
                   </td>
                   <td className="px-6 py-4">
                      <button
-                        onClick={() => onStatusToggle && onStatusToggle(t)}
+                        onClick={() => onStatusToggle && onStatusToggle(transaction)}
                         className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border transition-all active:scale-95 ${
-                          t.status === TransactionStatus.PAID
+                          transaction.status === TransactionStatus.PAID
                             ? 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/30'
                             : 'bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-900/30'
                         }`}
-                        title="Click to toggle status"
+                        title={t('transactions.toggleStatus')}
                      >
-                       {t.status === TransactionStatus.PAID ? (
+                       {transaction.status === TransactionStatus.PAID ? (
                          <>
-                           <CheckCircle size={12} /> Paid
+                           <CheckCircle size={12} /> {t('transactions.paid')}
                          </>
                        ) : (
                          <>
-                           <Clock size={12} /> Pending
+                           <Clock size={12} /> {t('transactions.pending')}
                          </>
                        )}
                      </button>
                   </td>
                   <td className="px-6 py-4">
                      <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 text-sm">
-                        {formatDate(t.date)}
+                        {formatDate(transaction.date)}
                      </div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
-                      <span className="text-slate-900 dark:text-white font-medium text-sm">{t.description}</span>
+                      <span className="text-slate-900 dark:text-white font-medium text-sm">{transaction.description}</span>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-slate-500">{t.category}</span>
-                        {t.isInstallment && (
+                        <span className="text-xs text-slate-500">{transaction.category}</span>
+                        {transaction.isInstallment && (
                           <span className="flex items-center gap-1 text-[10px] bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded border border-indigo-100 dark:border-indigo-900">
-                            <Layers size={10} /> {t.installmentNumber}/{t.totalInstallments}
+                            <Layers size={10} /> {transaction.installmentNumber}/{transaction.totalInstallments}
                           </span>
                         )}
-                        {t.isRecurring && (
+                        {transaction.isRecurring && (
                            <span className="flex items-center gap-1 text-[10px] bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-100 dark:border-emerald-900">
-                            <Repeat size={10} /> Monthly
+                            <Repeat size={10} /> {t('transactions.recurringMonthly')}
                           </span>
                         )}
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`text-xs font-medium px-2 py-1 rounded whitespace-nowrap ${t.cardId ? 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300' : 'bg-orange-50 dark:bg-orange-900/20 text-orange-600'}`}>
-                      {getCardName(t.cardId)}
+                    <span className={`text-xs font-medium px-2 py-1 rounded whitespace-nowrap ${transaction.cardId ? 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300' : 'bg-orange-50 dark:bg-orange-900/20 text-orange-600'}`}>
+                      {getCardName(transaction.cardId)}
                     </span>
                   </td>
                   <td className="px-6 py-4">
                      <div className="flex flex-wrap gap-1 max-w-[200px]">
-                        {t.tags && t.tags.length > 0 ? t.tags.map(tag => (
+                        {transaction.tags && transaction.tags.length > 0 ? transaction.tags.map(tag => (
                           <span key={tag} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
                              {tag}
                           </span>
@@ -291,13 +293,13 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex flex-col items-end">
-                      <span className={`font-semibold text-sm ${t.type === TransactionType.INCOME ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}`}>
-                        {isPrivate ? 'R$ ••••' : (t.type === TransactionType.INCOME ? '+' : '') + new Intl.NumberFormat('pt-BR', { style: 'currency', currency }).format(t.amount)}
+                      <span className={`font-semibold text-sm ${transaction.type === TransactionType.INCOME ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}`}>
+                        {isPrivate ? 'R$ ••••' : (transaction.type === TransactionType.INCOME ? '+' : '') + new Intl.NumberFormat(language === 'en' ? 'en-US' : language, { style: 'currency', currency }).format(transaction.amount)}
                       </span>
                       {/* Foreign Currency Indicator */}
-                      {t.originalAmount && t.originalCurrency && t.originalCurrency !== Currency.BRL && (
+                      {transaction.originalAmount && transaction.originalCurrency && transaction.originalCurrency !== Currency.BRL && (
                         <span className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
-                          <Globe size={10} /> {isPrivate ? '•••' : new Intl.NumberFormat('en-US', { style: 'currency', currency: t.originalCurrency }).format(t.originalAmount)}
+                          <Globe size={10} /> {isPrivate ? '•••' : new Intl.NumberFormat(language === 'en' ? 'en-US' : language, { style: 'currency', currency: transaction.originalCurrency }).format(transaction.originalAmount)}
                         </span>
                       )}
                     </div>
@@ -307,18 +309,18 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
                       <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                          {onEdit && (
                           <button 
-                            onClick={() => onEdit(t)}
+                            onClick={() => onEdit(transaction)}
                             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
-                            title="Edit transaction"
+                            title={t('transactions.editTransaction')}
                           >
                             <Edit2 size={16} />
                           </button>
                         )}
                         {onDelete && (
                           <button 
-                            onClick={() => handleDeleteClick(t.id)}
+                            onClick={() => handleDeleteClick(transaction.id)}
                             className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                            title="Delete transaction"
+                            title={t('common.delete')}
                           >
                             <Trash2 size={16} />
                           </button>
@@ -341,23 +343,23 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
               <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-full">
                 <AlertTriangle size={24} />
               </div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Delete Transaction?</h3>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t('transactions.deleteTitle')}</h3>
             </div>
             <p className="text-slate-500 dark:text-slate-400 mb-6 text-sm">
-              Are you sure you want to delete this transaction? This action cannot be undone and will affect your dashboard statistics.
+              {t('transactions.deleteConfirm')}
             </p>
             <div className="flex gap-3 justify-end">
               <button 
                 onClick={() => setDeleteConfirmId(null)}
                 className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button 
                 onClick={handleConfirmDelete}
                 className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-lg shadow-red-500/20 transition-all"
               >
-                {isDeleting ? 'Deleting...' : 'Yes, Delete'}
+                {isDeleting ? t('common.processing') : t('transactions.yesDelete')}
               </button>
             </div>
           </div>

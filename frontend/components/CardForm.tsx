@@ -5,6 +5,7 @@ import * as z from 'zod';
 import { X, CreditCard, Wifi, CircuitBoard, Smartphone } from 'lucide-react';
 import { useCreateCard, useUpdateCard } from '../hooks/useTransactions';
 import { CreditCard as CreditCardType } from '../types';
+import { useLanguage } from '../context/LanguageContext';
 
 interface CardFormProps {
   onClose: () => void;
@@ -12,27 +13,30 @@ interface CardFormProps {
   initialData?: CreditCardType | null;
 }
 
-const cardSchema = z.object({
-  name: z.string().min(3, "Card name is required"),
-  last4Digits: z.string().length(4, "Must be exactly 4 digits").regex(/^\d+$/, "Must be numbers"),
-  limit: z.number().min(1, "Limit must be greater than 0"),
-  closingDay: z.number().min(1).max(31),
-  dueDay: z.number().min(1).max(31),
+const buildCardSchema = (t: (key: string) => string) => z.object({
+  name: z.string().min(3, t('validation.cardNameRequired')),
+  last4Digits: z.string().length(4, t('validation.last4DigitsLength')).regex(/^\d+$/, t('validation.digitsNumbers')),
+  limit: z.number().min(1, t('validation.limitMin')),
+  closingDay: z.number().min(1, t('validation.closingDayRange')).max(31, t('validation.closingDayRange')),
+  dueDay: z.number().min(1, t('validation.dueDayRange')).max(31, t('validation.dueDayRange')),
 });
 
-type CardFormData = z.infer<typeof cardSchema>;
-
-const CARD_THEMES = [
-  { id: 'slate', class: 'bg-slate-900', label: 'Obsidian' },
-  { id: 'purple', class: 'bg-purple-600', label: 'Royal' },
-  { id: 'indigo', class: 'bg-indigo-600', label: 'Deep Blue' },
-  { id: 'blue', class: 'bg-blue-500', label: 'Azure' },
-  { id: 'emerald', class: 'bg-emerald-600', label: 'Forest' },
-  { id: 'rose', class: 'bg-rose-600', label: 'Ruby' },
-  { id: 'orange', class: 'bg-orange-500', label: 'Sunset' },
-];
+type CardFormData = z.infer<ReturnType<typeof buildCardSchema>>;
 
 export const CardForm: React.FC<CardFormProps> = ({ onClose, onSuccess, initialData }) => {
+  const { t, language } = useLanguage();
+  const cardSchema = React.useMemo(() => buildCardSchema(t), [t]);
+
+  const CARD_THEMES = [
+    { id: 'slate', class: 'bg-slate-900', label: t('cards.themeObsidian') },
+    { id: 'purple', class: 'bg-purple-600', label: t('cards.themeRoyal') },
+    { id: 'indigo', class: 'bg-indigo-600', label: t('cards.themeDeepBlue') },
+    { id: 'blue', class: 'bg-blue-500', label: t('cards.themeAzure') },
+    { id: 'emerald', class: 'bg-emerald-600', label: t('cards.themeForest') },
+    { id: 'rose', class: 'bg-rose-600', label: t('cards.themeRuby') },
+    { id: 'orange', class: 'bg-orange-500', label: t('cards.themeSunset') },
+  ];
+
   const [selectedColor, setSelectedColor] = useState(CARD_THEMES[0].class);
   const isEditing = !!initialData;
   
@@ -90,13 +94,13 @@ export const CardForm: React.FC<CardFormProps> = ({ onClose, onSuccess, initialD
   };
 
   // Watch values for Live Preview
-  const watchedName = watch('name') || 'Your Name';
+  const watchedName = watch('name') || t('cards.cardHolderPlaceholder');
   const watchedDigits = watch('last4Digits') || '1234';
   const watchedLimit = watch('limit') || 0;
   const watchedClosing = watch('closingDay') || 1;
   const watchedDue = watch('dueDay') || 10;
 
-  const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+  const formatCurrency = (val: number) => new Intl.NumberFormat(language === 'en' ? 'en-US' : language, { style: 'currency', currency: 'BRL' }).format(val);
   const isLoading = createCardMutation.isPending || updateCardMutation.isPending;
 
   return (
@@ -106,8 +110,8 @@ export const CardForm: React.FC<CardFormProps> = ({ onClose, onSuccess, initialD
         {/* Left Column: Live Preview */}
         <div className="w-full md:w-5/12 bg-slate-50 dark:bg-slate-950 p-8 md:p-12 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 relative">
           <div className="text-center mb-8 z-10">
-            <h3 className="text-lg font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Live Preview</h3>
-            <p className="text-sm text-slate-400">See how your card looks in real-time</p>
+            <h3 className="text-lg font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t('cards.livePreviewTitle')}</h3>
+            <p className="text-sm text-slate-400">{t('cards.livePreviewSubtitle')}</p>
           </div>
 
           {/* Realistic Card Component */}
@@ -142,11 +146,11 @@ export const CardForm: React.FC<CardFormProps> = ({ onClose, onSuccess, initialD
               {/* Card Details (Bottom) */}
               <div className="flex justify-between items-end mt-auto">
                 <div className="space-y-1">
-                  <p className="text-[10px] uppercase opacity-60 tracking-wider font-semibold">Card Holder</p>
+                  <p className="text-[10px] uppercase opacity-60 tracking-wider font-semibold">{t('cards.cardHolder')}</p>
                   <p className="font-medium tracking-wide uppercase truncate max-w-[140px]">{watchedName}</p>
                 </div>
                 <div className="text-right space-y-1">
-                   <p className="text-[10px] uppercase opacity-60 tracking-wider font-semibold">Limit</p>
+                   <p className="text-[10px] uppercase opacity-60 tracking-wider font-semibold">{t('cards.limit')}</p>
                    <p className="font-semibold">{formatCurrency(watchedLimit)}</p>
                 </div>
               </div>
@@ -156,13 +160,13 @@ export const CardForm: React.FC<CardFormProps> = ({ onClose, onSuccess, initialD
           {/* Info Badge */}
           <div className="mt-12 flex gap-6 text-xs text-slate-400">
              <div className="flex flex-col items-center gap-1">
-                <span className="font-semibold text-slate-900 dark:text-white">{watchedClosing}th</span>
-                <span>Closing Day</span>
+               <span className="font-semibold text-slate-900 dark:text-white">{watchedClosing}</span>
+               <span>{t('cards.closingDay')}</span>
              </div>
              <div className="h-8 w-px bg-slate-200 dark:bg-slate-700"></div>
              <div className="flex flex-col items-center gap-1">
-                <span className="font-semibold text-slate-900 dark:text-white">{watchedDue}th</span>
-                <span>Due Day</span>
+               <span className="font-semibold text-slate-900 dark:text-white">{watchedDue}</span>
+               <span>{t('cards.dueDay')}</span>
              </div>
           </div>
 
@@ -172,7 +176,7 @@ export const CardForm: React.FC<CardFormProps> = ({ onClose, onSuccess, initialD
         <div className="w-full md:w-7/12 flex flex-col h-full bg-white dark:bg-slate-900">
            <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-slate-800">
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                {isEditing ? 'Edit Card Details' : 'Add New Card'}
+                {isEditing ? t('cards.editCard') : t('cards.addCard')}
               </h2>
               <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
                 <X size={24} />
@@ -183,7 +187,7 @@ export const CardForm: React.FC<CardFormProps> = ({ onClose, onSuccess, initialD
               
               {/* Theme Selector */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">Card Style</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">{t('cards.cardStyle')}</label>
                 <div className="flex flex-wrap gap-3">
                   {CARD_THEMES.map((theme) => (
                     <button
@@ -199,12 +203,12 @@ export const CardForm: React.FC<CardFormProps> = ({ onClose, onSuccess, initialD
 
               {/* Name Field */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Card Name</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('cards.cardName')}</label>
                 <input 
                   type="text" 
                   {...register('name')}
                   className={`w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-all ${errors.name ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'}`}
-                  placeholder="e.g. Nubank Platinum"
+                  placeholder={t('cards.cardNamePlaceholder')}
                 />
                 {errors.name && <span className="text-red-500 text-xs mt-1 block">{errors.name.message}</span>}
               </div>
@@ -212,7 +216,7 @@ export const CardForm: React.FC<CardFormProps> = ({ onClose, onSuccess, initialD
               {/* Digits & Limit Row */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Last 4 Digits</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('cards.last4Digits')}</label>
                   <div className="relative">
                      <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                      <input 
@@ -226,7 +230,7 @@ export const CardForm: React.FC<CardFormProps> = ({ onClose, onSuccess, initialD
                   {errors.last4Digits && <span className="text-red-500 text-xs mt-1 block">{errors.last4Digits.message}</span>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Total Limit</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('cards.totalLimit')}</label>
                   <input 
                     type="number" 
                     {...register('limit', { valueAsNumber: true })}
@@ -240,22 +244,22 @@ export const CardForm: React.FC<CardFormProps> = ({ onClose, onSuccess, initialD
               {/* Days Row */}
               <div className="grid grid-cols-2 gap-4">
                  <div>
-                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Closing Day</label>
+                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('cards.closingDayLabel')}</label>
                    <input 
                       type="number" 
                       {...register('closingDay', { valueAsNumber: true })}
                       className={`w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white ${errors.closingDay ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'}`}
-                      placeholder="Day (1-31)"
+                     placeholder={t('cards.dayPlaceholder')}
                    />
                    {errors.closingDay && <span className="text-red-500 text-xs mt-1 block">{errors.closingDay.message}</span>}
                  </div>
                  <div>
-                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Due Day</label>
+                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('cards.dueDayLabel')}</label>
                    <input 
                       type="number" 
                       {...register('dueDay', { valueAsNumber: true })}
                       className={`w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white ${errors.dueDay ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'}`}
-                      placeholder="Day (1-31)"
+                     placeholder={t('cards.dayPlaceholder')}
                    />
                    {errors.dueDay && <span className="text-red-500 text-xs mt-1 block">{errors.dueDay.message}</span>}
                  </div>
@@ -267,7 +271,7 @@ export const CardForm: React.FC<CardFormProps> = ({ onClose, onSuccess, initialD
                   disabled={isLoading}
                   className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  {isLoading ? 'Processing...' : (isEditing ? 'Save Changes' : 'Save Card')}
+                  {isLoading ? t('common.processing') : (isEditing ? t('cards.saveChanges') : t('cards.saveCard'))}
                 </button>
               </div>
             </form>

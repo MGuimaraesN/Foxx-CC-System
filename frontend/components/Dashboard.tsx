@@ -32,11 +32,33 @@ const StatCard: React.FC<{ title: string; value: string; icon: React.ReactNode; 
 );
 
 export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency = 'BRL', isPrivate = false }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const formatCurrency = (val: number) => {
     if (isPrivate) return 'R$ ••••';
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency }).format(val);
+    return new Intl.NumberFormat(language === 'en' ? 'en-US' : language, { style: 'currency', currency }).format(val);
+  };
+
+  const formatMonthLabel = (value: string) => {
+    if (!value) return value;
+    const lower = value.trim().toLowerCase();
+    const monthMap: Record<string, number> = {
+      jan: 0,
+      feb: 1,
+      mar: 2,
+      apr: 3,
+      may: 4,
+      jun: 5,
+      jul: 6,
+      aug: 7,
+      sep: 8,
+      oct: 9,
+      nov: 10,
+      dec: 11,
+    };
+    const monthIndex = monthMap[lower.slice(0, 3)];
+    if (monthIndex === undefined) return value;
+    return new Intl.DateTimeFormat(language === 'en' ? 'en-US' : language, { month: 'short' }).format(new Date(2024, monthIndex, 1));
   };
 
   // Sunburst / Pie Logic
@@ -108,7 +130,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
           title={t('dashboard.upcomingMaturities')}
           value={formatCurrency(stats?.upcomingMaturities || 0)} 
           icon={<Clock size={20} />} 
-          subtext="Next 7 Days"
+          subtext={t('dashboard.next7Days')}
           loading={isLoading}
           colorClass="text-orange-600 dark:text-orange-400"
         />
@@ -123,7 +145,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
           title={t('dashboard.last3MoAvg')}
           value={formatCurrency(stats?.financialHealth?.averageLast3Months || 0)} 
           icon={<TrendingDown size={20} />} 
-          subtext="Rolling average baseline"
+          subtext={t('dashboard.rollingAvgBaseline')}
           loading={isLoading}
         />
 
@@ -133,7 +155,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
                 <AlertTriangle size={24} />
                 <div>
                    <h4 className="font-bold">{t('dashboard.limitApproaching')}</h4>
-                   <p className="text-sm">You have used {((stats?.usedLimit || 0) / (stats?.totalLimit || 1) * 100).toFixed(0)}% of your total credit limit.</p>
+                   <p className="text-sm">
+                     {t('dashboard.limitUsedPrefix')} {((stats?.usedLimit || 0) / (stats?.totalLimit || 1) * 100).toFixed(0)}% {t('dashboard.limitUsedSuffix')}
+                   </p>
                 </div>
             </div>
         )}
@@ -144,8 +168,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
             <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t('dashboard.expenseVsAvg')}</h3>
             <div className="flex items-center gap-4 text-xs text-slate-500">
-                <div className="flex items-center gap-1"><div className="w-3 h-3 bg-indigo-500 rounded-full"></div> Monthly Expense</div>
-                <div className="flex items-center gap-1"><div className="w-3 h-3 bg-emerald-400 rounded-full"></div> 3-Mo Average</div>
+              <div className="flex items-center gap-1"><div className="w-3 h-3 bg-indigo-500 rounded-full"></div> {t('dashboard.monthlyExpense')}</div>
+              <div className="flex items-center gap-1"><div className="w-3 h-3 bg-emerald-400 rounded-full"></div> {t('dashboard.threeMoAverage')}</div>
             </div>
             </div>
 
@@ -155,27 +179,57 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
             <div className="flex-1 w-full min-h-0 relative">
                 <div className="absolute inset-0">
                 <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={stats?.monthlyTrend}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" className="dark:stroke-slate-700" />
+                    <ComposedChart 
+                    data={stats?.monthlyTrend} 
+                    margin={{ top: 10, right: 10, left: 20, bottom: 0 }} // Aumentado o left para o número não fugir
+                    barCategoryGap={24}
+                    >
+                    <defs>
+                      <linearGradient id="monthlyBar" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#8b5cf6" stopOpacity={1} />
+                        <stop offset="100%" stopColor="#6d28d9" stopOpacity={0.9} />
+                      </linearGradient>
+                      <linearGradient id="avgGlow" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="#34d399" stopOpacity={0.15} />
+                        <stop offset="100%" stopColor="#34d399" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="2 6" vertical={false} stroke="#e2e8f0" className="dark:stroke-slate-700" />
                     <XAxis
                         dataKey="month"
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fill: '#64748b' }}
+                        tick={{ fill: '#64748b', fontSize: 12 }}
+                      tickFormatter={formatMonthLabel}
                         dy={10}
                     />
                     <YAxis
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fill: '#64748b' }}
-                        tickFormatter={(value) => isPrivate ? '•' : `R$${value/1000}k`}
+                        tick={{ fill: '#64748b', fontSize: 12 }}
+                        tickFormatter={(value) => isPrivate ? '•' : `R$${(value/1000).toFixed(1)}k`}
+                        width={45} // Largura fixa para garantir espaço do texto
                     />
                     <Tooltip
-                        contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
-                        formatter={(value: any) => isPrivate ? 'R$ ••••' : formatCurrency(value)}
+                        contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1f2937', borderRadius: '10px', color: '#fff', boxShadow: '0 10px 30px rgba(0,0,0,0.25)' }}
+                        cursor={{ fill: 'rgba(148,163,184,0.12)' }}
+                        formatter={(value: any, name: any) => {
+                          const label = name === 'amount' ? t('dashboard.monthlyExpense') : name === 'average' ? t('dashboard.threeMoAverage') : name;
+                          return [isPrivate ? 'R$ ••••' : formatCurrency(value), label];
+                        }}
+                        labelFormatter={(label: any) => formatMonthLabel(String(label))}
                     />
-                    <Bar dataKey="amount" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={40} />
-                    <Line type="monotone" dataKey="average" stroke="#34d399" strokeWidth={2} strokeDasharray="5 5" />
+                    {/* Ajustado barSize para ser proporcional e adicionado raio nas bordas */}
+                    <Bar dataKey="amount" fill="url(#monthlyBar)" radius={[6, 6, 0, 0]} barSize={32} /> 
+                    <Line
+                      type="monotone"
+                      dataKey="average"
+                      stroke="#34d399"
+                      strokeWidth={2.5}
+                      strokeDasharray="6 6"
+                      dot={{ r: 4, stroke: '#10b981', strokeWidth: 2, fill: '#ffffff' }}
+                      activeDot={{ r: 5, stroke: '#10b981', strokeWidth: 2, fill: '#ffffff' }}
+                    />
                     </ComposedChart>
                 </ResponsiveContainer>
                 </div>
@@ -195,8 +249,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
                 </div>
             </div>
             <div className="flex-1 w-full relative">
+              <div className="absolute inset-0 z-10">
                 <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
+                  <PieChart>
                         <Pie
                             data={categoryData}
                             dataKey="value"
@@ -214,15 +269,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
                         <Tooltip
                            contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
                            itemStyle={{ color: '#fff' }}
-                           formatter={(value: any) => isPrivate ? '•••%' : formatCurrency(value)}
+                           wrapperStyle={{ zIndex: 30 }}
+                           formatter={(value: any) => isPrivate ? '•••' : formatCurrency(value)}
                         />
-                    </PieChart>
-                </ResponsiveContainer>
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
 
                 {/* Center Label */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <div className="absolute inset-0 z-0 flex flex-col items-center justify-center pointer-events-none">
                     <span className="text-xs text-slate-400 font-medium uppercase tracking-wider">{t('common.total')}</span>
-                    <span className="text-xl font-bold text-slate-900 dark:text-white mt-1">
+                    <span className="text-2xs font-bold text-slate-900 dark:text-white mt-1">
                         {isPrivate ? '••••' : formatCurrency(categoryData.reduce((a, b) => a + b.value, 0))}
                     </span>
                 </div>
@@ -239,49 +296,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
             </div>
         </div>
 
-        {/* Forecast Widget */}
-        <div className="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-center h-[280px]">
-            <div className="flex items-center gap-3 mb-4">
-                <div className="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg text-indigo-600 dark:text-indigo-400">
-                    <Activity size={24} />
-                </div>
-                <div>
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t('dashboard.spendingForecast')}</h3>
-                    <p className="text-xs text-slate-500">Based on current pace</p>
-                </div>
-            </div>
-
-            <div className="space-y-4">
-                <div>
-                    <p className="text-sm text-slate-500 mb-1">{t('dashboard.projectedTotal')}</p>
-                    <p className="text-3xl font-bold text-slate-900 dark:text-white">{formatCurrency(projected)}</p>
-                </div>
-
-                <div className="flex justify-between items-end">
-                    <div>
-                        <p className="text-sm text-slate-500">vs 3-Month Average</p>
-                        <p className="font-medium text-slate-900 dark:text-white">{formatCurrency(avg)}</p>
-                    </div>
-                    <div className={`text-right font-bold ${projected > avg ? 'text-red-500' : 'text-emerald-500'}`}>
-                        {projected > avg ? '+' : ''}{avg > 0 ? ((projected - avg) / avg * 100).toFixed(1) : '0.0'}%
-                    </div>
-                </div>
-
-                <div>
-                    <div className="flex justify-between text-xs text-slate-500 mb-2">
-                        <span>{t('dashboard.monthProgress')}</span>
-                        <span>{pacePercentage.toFixed(0)}%</span>
-                    </div>
-                    <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-3 overflow-hidden">
-                        <div
-                            className="bg-indigo-600 h-full rounded-full transition-all duration-1000"
-                            style={{ width: `${pacePercentage}%` }}
-                        ></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         {/* Charts Grid */}
         <div className="col-span-1 lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Daily Spending Trend (New) */}
@@ -292,28 +306,32 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
                     </div>
                     <div>
                         <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t('dashboard.dailyTrend')}</h3>
-                        <p className="text-xs text-slate-500">Accumulated Spend</p>
+                        <p className="text-xs text-slate-500">{t('dashboard.accumulatedSpend')}</p>
                     </div>
                 </div>
                 <div className="flex-1 w-full relative">
                     <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={stats?.dailyTrend || []}>
-                            <defs>
-                                <linearGradient id="colorCurrent" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
-                                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
-                                </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" className="dark:stroke-slate-700" />
-                            <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                            <Tooltip
-                            contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
-                            formatter={(value: any) => isPrivate ? 'R$ ••••' : formatCurrency(value)}
-                            />
-                            <Area type="monotone" dataKey="current" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorCurrent)" />
-                            <Area type="monotone" dataKey="previous" stroke="#94a3b8" strokeWidth={2} strokeDasharray="5 5" fill="none" />
-                        </AreaChart>
+                      <AreaChart data={stats?.dailyTrend || []}>
+                        <defs>
+                          <linearGradient id="dailyCurrent" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#6366f1" stopOpacity={0.35}/>
+                            <stop offset="100%" stopColor="#6366f1" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="2 6" vertical={false} stroke="#e2e8f0" className="dark:stroke-slate-700" />
+                        <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                        <Tooltip
+                        contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1f2937', borderRadius: '10px', color: '#fff', boxShadow: '0 10px 30px rgba(0,0,0,0.25)' }}
+                        cursor={{ stroke: '#94a3b8', strokeDasharray: '4 4' }}
+                        formatter={(value: any, name: any) => {
+                          const label = name === 'current' ? t('dashboard.currentPeriod') : name === 'previous' ? t('dashboard.previousPeriod') : name;
+                          return [isPrivate ? 'R$ ••••' : formatCurrency(value), label];
+                        }}
+                        />
+                        <Area type="monotone" dataKey="current" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#dailyCurrent)" />
+                        <Area type="monotone" dataKey="previous" stroke="#94a3b8" strokeWidth={2} strokeDasharray="6 6" fill="none" dot={{ r: 2, fill: '#94a3b8', strokeWidth: 0 }} />
+                      </AreaChart>
                     </ResponsiveContainer>
                 </div>
             </div>
@@ -325,13 +343,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
                         <PieChartIcon size={24} />
                     </div>
                     <div>
-                        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Top Categories</h3>
-                        <p className="text-xs text-slate-500">Highest Spend</p>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t('dashboard.topCategories')}</h3>
+                        <p className="text-xs text-slate-500">{t('dashboard.highestSpend')}</p>
                     </div>
                 </div>
                 <div className="flex-1 w-full relative">
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={categoryData.slice(0, 5)} layout="vertical" margin={{ top: 0, right: 20, left: 20, bottom: 0 }}>
+                      <BarChart data={categoryData.slice(0, 5)} layout="vertical" margin={{ top: 0, right: 20, left: 20, bottom: 0 }} barCategoryGap={14}>
+                        <defs>
+                          <linearGradient id="topCats" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0%" stopColor="#10b981" stopOpacity={1} />
+                            <stop offset="100%" stopColor="#059669" stopOpacity={0.95} />
+                          </linearGradient>
+                        </defs>
                             <XAxis type="number" hide />
                             <YAxis
                                 dataKey="name"
@@ -342,11 +366,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
                                 tick={{ fill: '#64748b', fontSize: 12 }}
                             />
                             <Tooltip
-                            contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
-                            cursor={{ fill: 'transparent' }}
-                            formatter={(value: any) => isPrivate ? 'R$ ••••' : formatCurrency(value)}
+                        contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1f2937', borderRadius: '10px', color: '#fff', boxShadow: '0 10px 30px rgba(0,0,0,0.25)' }}
+                        cursor={{ fill: 'rgba(148,163,184,0.12)' }}
+                        formatter={(value: any, name: any) => {
+                          const label = name === 'value' ? t('transactions.amount') : name;
+                          return [isPrivate ? 'R$ ••••' : formatCurrency(value), label];
+                        }}
                             />
-                            <Bar dataKey="value" fill="#10b981" radius={[0, 4, 4, 0]} barSize={20} />
+                        <Bar dataKey="value" fill="url(#topCats)" radius={[0, 6, 6, 0]} barSize={20} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>

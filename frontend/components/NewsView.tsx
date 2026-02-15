@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { Search, Loader, ExternalLink, Newspaper } from 'lucide-react';
 import { searchFinancialNews } from '../services/aiService';
 import { NewsArticle } from '../types';
+import { useLanguage } from '../context/LanguageContext';
 
 export const NewsView: React.FC = () => {
-  const [query, setQuery] = useState('Market trends today');
+  const { t } = useLanguage();
+  const [query, setQuery] = useState(t('news.defaultQuery'));
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [summary, setSummary] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,7 +24,7 @@ export const NewsView: React.FC = () => {
       setArticles(result.articles);
     } catch (err) {
       console.error(err);
-      setSummary("Failed to fetch news. Please check the API key configuration.");
+      setSummary(t('news.fetchFailed'));
     } finally {
       setLoading(false);
     }
@@ -36,9 +38,9 @@ export const NewsView: React.FC = () => {
         <div className="inline-flex p-3 bg-indigo-50 dark:bg-indigo-900/30 rounded-full text-indigo-600 dark:text-indigo-400 mb-4">
            <Newspaper size={32} />
         </div>
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Financial News & Intelligence</h2>
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{t('news.title')}</h2>
         <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-lg mx-auto">
-          Use AI to search for the latest market updates, specific stock news, or economic trends.
+          {t('news.subtitle')}
         </p>
         
         <form onSubmit={handleSearch} className="relative max-w-lg mx-auto">
@@ -47,7 +49,7 @@ export const NewsView: React.FC = () => {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="w-full pl-5 pr-14 py-4 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-sm dark:text-white transition-all"
-            placeholder="Search for..."
+            placeholder={t('news.placeholder')}
           />
           <button 
             type="submit"
@@ -67,7 +69,7 @@ export const NewsView: React.FC = () => {
           <div className="lg:col-span-2 space-y-6">
              <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                  AI Summary
+                  {t('news.aiSummary')}
                 </h3>
                 {loading ? (
                   <div className="space-y-3">
@@ -85,7 +87,7 @@ export const NewsView: React.FC = () => {
 
           {/* Sources Column */}
           <div className="space-y-4">
-             <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Sources</h3>
+             <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t('news.sources')}</h3>
              {loading ? (
                 [1,2,3].map(i => <div key={i} className="h-20 bg-white dark:bg-slate-800 rounded-xl animate-pulse" />)
              ) : (
@@ -102,13 +104,13 @@ export const NewsView: React.FC = () => {
                         {article.title}
                       </h4>
                       <div className="flex justify-between items-center text-xs text-slate-500">
-                        <span>{article.source || 'Web'}</span>
+                        <span>{article.source || t('news.webSource')}</span>
                         <ExternalLink size={12} />
                       </div>
                    </a>
                  ))
                ) : (
-                 <div className="text-center p-6 text-slate-400 text-sm">No specific sources found.</div>
+                 <div className="text-center p-6 text-slate-400 text-sm">{t('news.noSources')}</div>
                )
              )}
           </div>

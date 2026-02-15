@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { TransactionTable } from './TransactionTable';
 import { Transaction, CreditCard, TransactionType, TransactionStatus } from '../types';
-import { Search, Filter, AlertCircle, Calendar, Tag as TagIcon, Check, ArrowUpCircle, ArrowDownCircle, Wallet, FileText, Sheet, Download, RefreshCw, Trash2, CheckCircle, X } from 'lucide-react';
+import { Search, Filter, AlertCircle, Calendar, Tag as TagIcon, Check, ArrowUpCircle, ArrowDownCircle, Wallet, FileText, Sheet, RefreshCw, Trash2, CheckCircle, X } from 'lucide-react';
 import { TransactionForm } from './TransactionForm';
 import { useUpdateTransaction } from '../hooks/useTransactions';
 import { bulkUpdateStatus, bulkDelete } from '../services/transactionService';
@@ -23,7 +23,7 @@ interface TransactionsViewProps {
 }
 
 export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions, loading, cards, onDelete, isDeleting, error, showToast, currency = 'BRL', isPrivate = false }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<'ALL' | TransactionType>('ALL');
@@ -36,6 +36,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
   const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const tagDropdownRef = useRef<HTMLDivElement | null>(null);
   
   // Edit State
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
@@ -49,12 +50,29 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
+  useEffect(() => {
+    if (!isTagDropdownOpen) return;
+    const handleClick = (event: MouseEvent) => {
+      if (tagDropdownRef.current && !tagDropdownRef.current.contains(event.target as Node)) {
+        setIsTagDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [isTagDropdownOpen]);
+
+  useEffect(() => {
+    if (!isExpanded && isTagDropdownOpen) {
+      setIsTagDropdownOpen(false);
+    }
+  }, [isExpanded, isTagDropdownOpen]);
+
   const updateMutation = useUpdateTransaction({
     onSuccess: () => {
-      if (showToast) showToast('Transaction status updated', 'success');
+      if (showToast) showToast(t('transactions.statusUpdated'), 'success');
     },
     onError: (err) => {
-      if (showToast) showToast(`Failed to update status: ${err.message}`, 'error');
+      if (showToast) showToast(`${t('transactions.statusUpdateFailed')}: ${err.message}`, 'error');
     }
   });
 
@@ -87,7 +105,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
-      toast.success('Bulk status updated');
+      toast.success(t('transactions.bulkStatusUpdated'));
       setSelectedIds([]);
     }
   });
@@ -97,7 +115,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
-      toast.success('Bulk items deleted');
+      toast.success(t('transactions.bulkItemsDeleted'));
       setSelectedIds([]);
     }
   });
@@ -153,6 +171,18 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
     return matchesSearch && matchesType && matchesStatus && matchesCard && matchesCategory && matchesDate && matchesTags;
   });
 
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (searchTerm.trim()) count += 1;
+    if (startDate || endDate) count += 1;
+    if (categoryFilter.trim()) count += 1;
+    if (statusFilter !== 'ALL') count += 1;
+    if (typeFilter !== 'ALL') count += 1;
+    if (cardFilter !== 'ALL') count += 1;
+    if (selectedTags.length > 0) count += 1;
+    return count;
+  }, [searchTerm, startDate, endDate, categoryFilter, statusFilter, typeFilter, cardFilter, selectedTags.length]);
+
   // Calculate Summary based on filtered transactions
   const summary = useMemo(() => {
     return filteredTransactions.reduce((acc, t) => {
@@ -169,20 +199,20 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
 
   const handleExportPDF = () => {
     if (filteredTransactions.length === 0) {
-      if (showToast) showToast('No data to export', 'error');
+      if (showToast) showToast(t('common.noDataToExport'), 'error');
       return;
     }
     exportToPDF(filteredTransactions, cards);
-    if (showToast) showToast('PDF Exported Successfully', 'success');
+    if (showToast) showToast(t('transactions.pdfExported'), 'success');
   };
 
   const handleExportExcel = () => {
     if (filteredTransactions.length === 0) {
-      if (showToast) showToast('No data to export', 'error');
+      if (showToast) showToast(t('common.noDataToExport'), 'error');
       return;
     }
     exportToExcel(filteredTransactions, cards);
-    if (showToast) showToast('Excel Exported Successfully', 'success');
+    if (showToast) showToast(t('transactions.excelExported'), 'success');
   };
 
   if (error) {
@@ -190,7 +220,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
        <div className="p-6 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800 flex items-start gap-3">
          <AlertCircle className="text-red-600 dark:text-red-400 mt-1" size={20} />
          <div>
-           <h3 className="text-lg font-semibold text-red-800 dark:text-red-300">Failed to load transactions</h3>
+           <h3 className="text-lg font-semibold text-red-800 dark:text-red-300">{t('transactions.loadFailed')}</h3>
            <p className="text-red-600 dark:text-red-400 mt-1">{error.message}</p>
          </div>
        </div>
@@ -199,7 +229,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
 
   const formatMoney = (amount: number) => {
     if (isPrivate) return 'R$ ••••';
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency }).format(amount);
+    return new Intl.NumberFormat(language === 'en' ? 'en-US' : language, { style: 'currency', currency }).format(amount);
   };
 
   return (
@@ -231,7 +261,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
         </div>
         <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between">
            <div>
-             <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Net Balance</p>
+             <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">{t('transactions.netBalance')}</p>
              <h3 className={`text-2xl font-bold mt-1 ${netBalance >= 0 ? 'text-slate-900 dark:text-white' : 'text-red-600 dark:text-red-400'}`}>{formatMoney(netBalance)}</h3>
            </div>
            <div className="p-3 bg-indigo-50 dark:bg-indigo-900/30 rounded-full text-indigo-600 dark:text-indigo-400">
@@ -240,81 +270,179 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
         </div>
       </div>
 
-      {/* Filter Bar - Simplified Row */}
-      <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-wrap gap-3 items-center">
-        
-        {/* 1. Search */}
-        <div className="relative flex-grow min-w-[200px]">
-           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-           <input
-             type="text"
-             placeholder={t('common.search')}
-             value={searchTerm}
-             onChange={(e) => setSearchTerm(e.target.value)}
-             className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white text-sm"
-           />
+      {/* Filter Bar */}
+      <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative flex-1 min-w-[220px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            <input
+              type="text"
+              placeholder={t('common.search')}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white text-sm"
+            />
+          </div>
+
+          <button
+            onClick={() => setIsExpanded(prev => !prev)}
+            className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
+              isExpanded
+                ? 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800'
+                : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-800'
+            }`}
+            title={t('common.filter')}
+          >
+            <Filter size={16} />
+            <span>{t('common.filter')}</span>
+            {activeFiltersCount > 0 && (
+              <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-indigo-600 text-white">
+                {activeFiltersCount}
+              </span>
+            )}
+          </button>
+
+          <div className="flex items-center gap-1 md:ml-auto">
+            <button onClick={handleSyncBot} className="p-2 text-slate-500 hover:text-indigo-600 transition-colors" title={t('transactions.syncBot')}><RefreshCw size={18} /></button>
+            <button onClick={handleExportPDF} className="p-2 text-slate-500 hover:text-red-600 transition-colors" title={t('transactions.exportPdfShort')}><FileText size={18} /></button>
+            <button onClick={handleExportExcel} className="p-2 text-slate-500 hover:text-emerald-600 transition-colors" title={t('transactions.exportExcelShort')}><Sheet size={18} /></button>
+            {activeFiltersCount > 0 && (
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setStartDate('');
+                  setEndDate('');
+                  setCategoryFilter('');
+                  setStatusFilter('ALL');
+                  setTypeFilter('ALL');
+                  setCardFilter('ALL');
+                  setSelectedTags([]);
+                }}
+                className="ml-1 inline-flex items-center gap-2 px-3 py-2 text-slate-600 hover:text-red-500 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-700 rounded-lg transition-colors text-sm"
+                title={t('transactions.clearFilters')}
+              >
+                <X size={16} />
+                <span className="hidden sm:inline">{t('transactions.clearFilters')}</span>
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* 2. Date Range */}
-        <div className="flex items-center gap-2">
-           <input
-             type="date"
-             value={startDate}
-             onChange={(e) => setStartDate(e.target.value)}
-             className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm dark:text-white"
-           />
-           <span className="text-slate-400">-</span>
-           <input
-             type="date"
-             value={endDate}
-             onChange={(e) => setEndDate(e.target.value)}
-             className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm dark:text-white"
-           />
-        </div>
+        {isExpanded && (
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
+            <div className="xl:col-span-2">
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{t('transactions.date')}</label>
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-full pl-8 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm dark:text-white"
+                  />
+                </div>
+                <span className="text-slate-400">-</span>
+                <div className="relative flex-1">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="w-full pl-8 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm dark:text-white"
+                  />
+                </div>
+              </div>
+            </div>
 
-        {/* 3. Category */}
-        <input
-            type="text"
-            placeholder={t('transactions.category')}
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="w-32 px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm dark:text-white"
-        />
+            <div>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{t('transactions.tableType')}</label>
+              <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value as any)}
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm dark:text-white"
+              >
+                <option value="ALL">{t('transactions.allTypes')}</option>
+                <option value="INCOME">{t('transactions.income')}</option>
+                <option value="EXPENSE">{t('transactions.expense')}</option>
+              </select>
+            </div>
 
-        {/* 4. Status */}
-        <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as any)}
-            className="w-32 px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm dark:text-white"
-        >
-             <option value="ALL">Status: All</option>
-             <option value="PAID">Paid</option>
-             <option value="PENDING">Pending</option>
-        </select>
+            <div>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{t('transactions.tableStatus')}</label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as any)}
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm dark:text-white"
+              >
+                <option value="ALL">{t('transactions.statusAll')}</option>
+                <option value="PAID">{t('transactions.statusPaid')}</option>
+                <option value="PENDING">{t('transactions.statusPending')}</option>
+              </select>
+            </div>
 
-        {/* 5. Clear Button */}
-        <button
-            onClick={() => {
-                setSearchTerm('');
-                setStartDate('');
-                setEndDate('');
-                setCategoryFilter('');
-                setStatusFilter('ALL');
-                setCardFilter('ALL');
-                setSelectedTags([]);
-            }}
-            className="px-3 py-2 text-slate-500 hover:text-red-500 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg transition-colors"
-            title="Clear Filters"
-        >
-            <X size={18} />
-        </button>
+            <div>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{t('transactions.card')}</label>
+              <select
+                value={cardFilter}
+                onChange={(e) => setCardFilter(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm dark:text-white"
+              >
+                <option value="ALL">{t('transactions.allCards')}</option>
+                {cards.map(card => (
+                  <option key={card.id} value={card.id}>{card.name}</option>
+                ))}
+              </select>
+            </div>
 
-        {/* Extra Actions (Sync/Export) - kept compact */}
-        <div className="flex border-l border-slate-200 dark:border-slate-700 pl-3 gap-1">
-             <button onClick={handleSyncBot} className="p-2 text-slate-500 hover:text-indigo-600 transition-colors" title={t('transactions.syncBot')}><RefreshCw size={18} /></button>
-             <button onClick={handleExportPDF} className="p-2 text-slate-500 hover:text-red-600 transition-colors" title="PDF"><FileText size={18} /></button>
-             <button onClick={handleExportExcel} className="p-2 text-slate-500 hover:text-emerald-600 transition-colors" title="Excel"><Sheet size={18} /></button>
-        </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{t('transactions.category')}</label>
+              <input
+                type="text"
+                placeholder={t('transactions.category')}
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm dark:text-white"
+              />
+            </div>
+
+            <div className="relative" ref={tagDropdownRef}>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{t('transactions.tags')}</label>
+              <button
+                type="button"
+                onClick={() => setIsTagDropdownOpen(prev => !prev)}
+                className="w-full inline-flex items-center justify-between gap-2 px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              >
+                <span className="inline-flex items-center gap-2">
+                  <TagIcon size={14} />
+                  {selectedTags.length > 0 ? `${t('transactions.tags')} (${selectedTags.length})` : t('transactions.tags')}
+                </span>
+                <span className="text-slate-400">▾</span>
+              </button>
+              {isTagDropdownOpen && (
+                <div className="absolute z-20 mt-2 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg max-h-56 overflow-auto">
+                  {availableTags.length === 0 ? (
+                    <div className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
+                      {t('transactions.noTags')}
+                    </div>
+                  ) : (
+                    availableTags.map(tag => (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => toggleTag(tag)}
+                        className="w-full flex items-center justify-between px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                      >
+                        <span>{tag}</span>
+                        {selectedTags.includes(tag) && <Check size={14} className="text-indigo-500" />}
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       <TransactionTable 
@@ -360,7 +488,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ transactions
       {editingTransaction && (
         <TransactionForm
           onClose={() => setEditingTransaction(null)}
-          onSuccess={() => showToast && showToast('Transaction updated successfully', 'success')}
+          onSuccess={() => showToast && showToast(t('transactions.transactionUpdated'), 'success')}
           cards={cards}
           initialData={editingTransaction}
           availableTags={availableTags}

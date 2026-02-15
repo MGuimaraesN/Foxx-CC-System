@@ -5,20 +5,23 @@ import { z } from 'zod';
 import { Loader2, Mail, Lock } from 'lucide-react';
 import { login } from '../services/userService';
 import { toast } from 'sonner';
+import { useLanguage } from '../context/LanguageContext';
 
-const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(1, 'Password is required'),
+const buildLoginSchema = (t: (key: string) => string) => z.object({
+  email: z.string().email(t('validation.invalidEmail')),
+  password: z.string().min(1, t('validation.passwordRequired')),
 });
 
-type LoginForm = z.infer<typeof loginSchema>;
+type LoginForm = z.infer<ReturnType<typeof buildLoginSchema>>;
 
 interface LoginViewProps {
   onLoginSuccess: () => void;
 }
 
 export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
+  const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
+  const loginSchema = React.useMemo(() => buildLoginSchema(t), [t]);
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
   });
@@ -31,10 +34,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
     const success = await login(data.email, data.password);
 
     if (success) {
-      toast.success('Welcome back!');
+      toast.success(t('auth.welcomeToast'));
       onLoginSuccess();
     } else {
-      toast.error('Invalid credentials');
+      toast.error(t('auth.invalidCredentials'));
     }
     setIsLoading(false);
   };
@@ -52,13 +55,13 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
           <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-500/30">
             <span className="text-white font-bold text-xl">C</span>
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Welcome Back</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-2">Sign in to manage your expenses</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t('auth.welcomeBack')}</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-2">{t('auth.signInSubtitle')}</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Email</label>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">{t('auth.emailLabel')}</label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input
@@ -72,7 +75,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Password</label>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">{t('auth.passwordLabel')}</label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input
@@ -90,16 +93,16 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
             disabled={isLoading}
             className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-indigo-500/20 active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2"
           >
-            {isLoading ? <Loader2 className="animate-spin" size={20} /> : 'Sign In'}
+            {isLoading ? <Loader2 className="animate-spin" size={20} /> : t('auth.signIn')}
           </button>
         </form>
 
         <div className="mt-6 text-center">
             <p className="text-sm text-slate-500 dark:text-slate-400">
-                Don't have an account? <a href="#" className="text-indigo-600 font-semibold hover:underline">Contact Admin</a>
+              {t('auth.noAccount')} <a href="#" className="text-indigo-600 font-semibold hover:underline">{t('auth.contactAdmin')}</a>
             </p>
             <p className="text-xs text-slate-400 mt-4">
-               Demo Credentials: test@example.com / password123
+               {t('auth.demoCredentials')}
             </p>
         </div>
       </div>

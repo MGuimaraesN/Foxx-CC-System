@@ -6,6 +6,7 @@ import { CardForm } from './CardForm';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { deleteCard } from '../services/transactionService';
 import { toast } from 'sonner';
+import { useLanguage } from '../context/LanguageContext';
 
 interface CardsViewProps {
   cards: CreditCard[];
@@ -16,6 +17,7 @@ interface CardsViewProps {
 }
 
 export const CardsView: React.FC<CardsViewProps> = ({ cards, loading, onSuccess, transactions = [], isPrivate = false }) => {
+  const { t, language } = useLanguage();
   const [showCardModal, setShowCardModal] = useState(false);
   const [editingCard, setEditingCard] = useState<CreditCard | null>(null);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
@@ -26,10 +28,10 @@ export const CardsView: React.FC<CardsViewProps> = ({ cards, loading, onSuccess,
     mutationFn: deleteCard,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cards'] });
-      toast.success('Card deleted');
+      toast.success(t('cardsView.deleted'));
       setCardToDelete(null);
     },
-    onError: () => toast.error('Failed to delete card')
+    onError: () => toast.error(t('cardsView.deleteFailed'))
   });
 
   const history = useMemo(() => {
@@ -75,16 +77,16 @@ export const CardsView: React.FC<CardsViewProps> = ({ cards, loading, onSuccess,
     );
   }
 
-  const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+  const formatCurrency = (val: number) => new Intl.NumberFormat(language === 'en' ? 'en-US' : language, { style: 'currency', currency: 'BRL' }).format(val);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex justify-end">
         <button 
           onClick={() => setShowCardModal(true)}
-          className="text-sm font-medium text-indigo-600 dark:text-indigo-400 flex items-center gap-1 hover:underline"
+          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 shadow-lg shadow-indigo-500/20"
         >
-          <Plus size={16} /> Add New Card
+          <Plus size={18} /> {t('cardsView.addNew')}
         </button>
       </div>
 
@@ -97,7 +99,7 @@ export const CardsView: React.FC<CardsViewProps> = ({ cards, loading, onSuccess,
             {/* Best Buy Day Badge */}
             {isBestDayToBuy(card.closingDay) && (
               <div className="absolute top-0 left-0 bg-emerald-500 text-white text-[10px] font-bold px-3 py-1 rounded-br-lg shadow-lg z-20 flex items-center gap-1">
-                 <ThumbsUp size={10} /> BEST DAY TO BUY
+                 <ThumbsUp size={10} /> {t('cardsView.bestDayToBuy')}
               </div>
             )}
 
@@ -110,14 +112,14 @@ export const CardsView: React.FC<CardsViewProps> = ({ cards, loading, onSuccess,
                <button 
                  onClick={() => handleEdit(card)}
                  className="p-2 bg-black/20 hover:bg-black/40 rounded-full text-white backdrop-blur-sm transition-colors"
-                 title="Edit Card"
+                 title={t('cardsView.editCard')}
                >
                  <Edit2 size={16} />
                </button>
                <button
                  onClick={() => setCardToDelete(card.id)}
                  className="p-2 bg-red-500/80 hover:bg-red-600/80 rounded-full text-white backdrop-blur-sm transition-colors"
-                 title="Delete Card"
+                 title={t('cardsView.deleteCard')}
                >
                  <Trash2 size={16} />
                </button>
@@ -127,7 +129,7 @@ export const CardsView: React.FC<CardsViewProps> = ({ cards, loading, onSuccess,
               <div className="flex justify-between items-start mt-4">
                 <div>
                   <h3 className="font-bold text-lg tracking-wide">{card.name}</h3>
-                  <p className="text-xs opacity-75">Credit Card</p>
+                  <p className="text-xs opacity-75">{t('cardsView.cardLabel')}</p>
                 </div>
                 <Wifi size={24} className="opacity-75" />
               </div>
@@ -143,11 +145,11 @@ export const CardsView: React.FC<CardsViewProps> = ({ cards, loading, onSuccess,
 
               <div className="flex justify-between items-end">
                 <div>
-                  <p className="text-xs opacity-75 mb-1">Total Limit</p>
+                  <p className="text-xs opacity-75 mb-1">{t('cardsView.totalLimit')}</p>
                   <p className="font-semibold">{isPrivate ? 'R$ ••••' : formatCurrency(card.limit)}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs opacity-75 mb-1">Closing Day</p>
+                  <p className="text-xs opacity-75 mb-1">{t('cardsView.closingDay')}</p>
                   <p className="font-semibold">{card.closingDay}</p>
                 </div>
               </div>
@@ -161,14 +163,14 @@ export const CardsView: React.FC<CardsViewProps> = ({ cards, loading, onSuccess,
           className="h-full min-h-[14rem] rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 flex flex-col items-center justify-center text-slate-400 hover:border-indigo-500 hover:text-indigo-500 transition-colors bg-slate-50/50 dark:bg-slate-900/50"
         >
           <Plus size={32} className="mb-2" />
-          <span className="font-medium">Link new card</span>
+          <span className="font-medium">{t('cardsView.linkNew')}</span>
         </button>
       </div>
 
       {/* Card Details / Analysis Section */}
       <div className="mt-10 grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-100 dark:border-slate-700">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Limit Utilization</h3>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">{t('cardsView.limitUtilization')}</h3>
           <div className="space-y-4">
             {cards.map(card => {
                const cardExpenses = transactions.filter(t => t.cardId === card.id && (t.type === 'EXPENSE' || t.amount < 0));
@@ -195,7 +197,7 @@ export const CardsView: React.FC<CardsViewProps> = ({ cards, loading, onSuccess,
         </div>
 
         <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-100 dark:border-slate-700">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Invoice History</h3>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">{t('cardsView.invoiceHistory')}</h3>
             <div className="flex gap-2 overflow-x-auto pb-2 mb-4 no-scrollbar">
                 {cards.map(card => (
                     <button
@@ -211,12 +213,12 @@ export const CardsView: React.FC<CardsViewProps> = ({ cards, loading, onSuccess,
             <div className="space-y-2 max-h-[300px] overflow-y-auto">
                 {selectedCardId ? (
                     history.length === 0 ? (
-                        <p className="text-slate-500 text-sm text-center py-4">No history found.</p>
+                      <p className="text-slate-500 text-sm text-center py-4">{t('cardsView.noHistory')}</p>
                     ) : (
                         history.map(item => (
                             <div key={item.month} className="flex justify-between p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-100 dark:border-slate-700/50">
                                 <span className="font-medium text-slate-700 dark:text-slate-300 text-sm capitalize">
-                                    {new Date(item.month + '-02').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+                            {new Date(item.month + '-02').toLocaleDateString(language === 'en' ? 'en-US' : language, { month: 'long', year: 'numeric' })}
                                 </span>
                                 <span className="font-bold text-slate-900 dark:text-white text-sm">
                                     {isPrivate ? 'R$ ••••' : formatCurrency(item.amount)}
@@ -225,7 +227,7 @@ export const CardsView: React.FC<CardsViewProps> = ({ cards, loading, onSuccess,
                         ))
                     )
                 ) : (
-                    <p className="text-slate-500 text-sm text-center py-4">Select a card to view history.</p>
+                    <p className="text-slate-500 text-sm text-center py-4">{t('cardsView.selectCard')}</p>
                 )}
             </div>
         </div>
@@ -242,20 +244,20 @@ export const CardsView: React.FC<CardsViewProps> = ({ cards, loading, onSuccess,
       {cardToDelete && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-slate-800 p-6 rounded-xl max-w-sm w-full mx-4 shadow-xl">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Delete Card?</h3>
-            <p className="text-slate-500 text-sm mb-6">This action cannot be undone. All transactions linked to this card will lose their association.</p>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">{t('cardsView.deleteTitle')}</h3>
+            <p className="text-slate-500 text-sm mb-6">{t('cardsView.deleteConfirm')}</p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setCardToDelete(null)}
                 className="px-4 py-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-sm font-medium"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={() => deleteMutation.mutate(cardToDelete)}
                 className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium"
               >
-                Delete
+                {t('common.delete')}
               </button>
             </div>
           </div>

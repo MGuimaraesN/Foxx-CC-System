@@ -6,6 +6,7 @@ import { X, Calendar, DollarSign, Tag, CreditCard as CardIcon, Repeat, ArrowUpCi
 import { TransactionType, Currency, CreditCard, Transaction, RecurrenceFrequency, TransactionStatus } from '../types';
 import { useCreateTransaction, useUpdateTransaction } from '../hooks/useTransactions';
 import { useBudgets } from '../hooks/useBudgets';
+import { useLanguage } from '../context/LanguageContext';
 
 interface TransactionFormProps {
   onClose: () => void;
@@ -15,12 +16,11 @@ interface TransactionFormProps {
   availableTags?: string[];
 }
 
-// Zod Schema Validation
-const transactionSchema = z.object({
-  description: z.string().min(3, "Description must be at least 3 characters"),
-  amount: z.preprocess((val) => Number(val), z.number().positive("Amount must be greater than 0")),
-  date: z.string().refine((val) => !isNaN(Date.parse(val)), "Invalid date"),
-  category: z.string().min(2, "Category is required"),
+const buildTransactionSchema = (t: (key: string) => string) => z.object({
+  description: z.string().min(3, t('validation.descriptionMin')),
+  amount: z.preprocess((val) => Number(val), z.number().positive(t('validation.amountPositive'))),
+  date: z.string().refine((val) => !isNaN(Date.parse(val)), t('validation.invalidDate')),
+  category: z.string().min(2, t('validation.categoryRequired')),
   type: z.nativeEnum(TransactionType),
   status: z.nativeEnum(TransactionStatus),
   cardId: z.string().optional(),
@@ -33,9 +33,10 @@ const transactionSchema = z.object({
   receiptUrl: z.string().nullable().optional(),
 });
 
-type TransactionFormData = z.infer<typeof transactionSchema>;
+type TransactionFormData = z.infer<ReturnType<typeof buildTransactionSchema>>;
 
 export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSuccess, cards, initialData, availableTags = [] }) => {
+  const { t } = useLanguage();
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
@@ -51,6 +52,8 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSuc
   const budgetCategories = budgets?.map(b => b.category) || [];
   const initialCategory = initialData?.category;
   const uniqueCategories = Array.from(new Set([...budgetCategories, ...(initialCategory ? [initialCategory] : [])])).sort();
+
+  const transactionSchema = React.useMemo(() => buildTransactionSchema(t), [t]);
 
   const { register, handleSubmit, watch, formState: { errors }, reset, setValue } = useForm<TransactionFormData>({
     resolver: zodResolver(transactionSchema),
@@ -156,7 +159,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSuc
       onSuccess();
       onClose();
     } catch (error) {
-      console.error("Failed to save transaction", error);
+      console.error('Failed to save transaction', error);
     }
   };
 
@@ -167,7 +170,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSuc
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-slate-800">
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-            {isEditing ? 'Edit Transaction' : 'New Transaction'}
+            {isEditing ? t('transactionForm.titleEdit') : t('transactionForm.titleNew')}
           </h2>
           <button onClick={onClose} className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
             <X size={24} />
@@ -185,21 +188,21 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSuc
                 onClick={() => setValue('type', TransactionType.EXPENSE)}
                 className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${watchType === TransactionType.EXPENSE ? 'bg-white dark:bg-slate-700 text-red-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
               >
-                <ArrowDownCircle size={16} /> Expense
+                <ArrowDownCircle size={16} /> {t('transactions.expense')}
               </button>
               <button
                 type="button"
                 onClick={() => setValue('type', TransactionType.INCOME)}
                 className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${watchType === TransactionType.INCOME ? 'bg-white dark:bg-slate-700 text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
               >
-                <ArrowUpCircle size={16} /> Income
+                <ArrowUpCircle size={16} /> {t('transactions.income')}
               </button>
             </div>
             
             {/* Status Toggle */}
             <div className="flex items-center gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg px-3">
                <label className="flex items-center gap-2 cursor-pointer">
-                  <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Paid?</span>
+                <span className="text-sm font-medium text-slate-600 dark:text-slate-400">{t('transactionForm.paidQuestion')}</span>
                   <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${watchStatus === TransactionStatus.PAID ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'}`}>
                     <input 
                       type="checkbox" 
@@ -215,7 +218,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSuc
 
           {/* Amount */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Amount</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('transactionForm.amount')}</label>
             <div className="relative">
               <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input 
@@ -231,25 +234,25 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSuc
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Description</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('transactionForm.description')}</label>
             <input 
               type="text" 
               {...register('description')}
               className={`w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none dark:text-white ${errors.description ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'}`}
-              placeholder="e.g. Uber trip"
+              placeholder={t('transactionForm.descriptionPlaceholder')}
             />
             {errors.description && <span className="text-red-500 text-xs mt-1 block">{errors.description.message}</span>}
           </div>
 
           {/* Category & Tags */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Category</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('transactionForm.category')}</label>
             <div className="relative group">
               <select
                 {...register('category')}
                 className={`w-full pl-4 pr-10 py-3 bg-slate-50 dark:bg-slate-800 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none appearance-none dark:text-white ${errors.category ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'}`}
               >
-                 <option value="" disabled>Select Category</option>
+                 <option value="" disabled>{t('transactionForm.categorySelect')}</option>
                  {uniqueCategories.map(cat => (
                    <option key={cat} value={cat}>{cat}</option>
                  ))}
@@ -262,7 +265,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSuc
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Tags</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('transactionForm.tags')}</label>
             <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 flex flex-wrap gap-2 focus-within:ring-2 focus-within:ring-indigo-500 ring-offset-1 dark:ring-offset-slate-900 min-h-[46px]">
               {tags.map(tag => (
                 <span key={tag} className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-2 py-1 rounded text-xs font-medium flex items-center gap-1 animate-in fade-in zoom-in duration-200">
@@ -277,7 +280,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSuc
                     onChange={e => setTagInput(e.target.value)}
                     onKeyDown={handleAddTag}
                     className="bg-transparent border-none focus:ring-0 text-sm w-full h-full py-1 pl-7 dark:text-white"
-                    placeholder="Add tag..."
+                      placeholder={t('transactionForm.tagsPlaceholder')}
                  />
                  <Tag size={14} className="absolute left-1 top-1/2 -translate-y-1/2 text-slate-400" />
                  {tagInput && (
@@ -293,7 +296,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSuc
                       ))}
                       {tagInput && !availableTags.includes(tagInput) && (
                          <div className="px-3 py-2 text-xs text-slate-500 border-t border-slate-100 dark:border-slate-700">
-                           Press Enter to create "{tagInput}"
+                           {t('transactionForm.createTagHint').replace('{tag}', tagInput)}
                          </div>
                       )}
                    </div>
@@ -306,6 +309,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSuc
           <div className="grid grid-cols-2 gap-4">
              <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Date</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('transactionForm.date')}</label>
               <div className="relative">
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 <input 
@@ -318,14 +322,14 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSuc
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Credit Card (Opt)</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('transactionForm.cardOptional')}</label>
               <div className="relative">
                 <CardIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 <select 
                   {...register('cardId')}
                   className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 appearance-none dark:text-white"
                 >
-                  <option value="">No Card (Cash/Debit)</option>
+                  <option value="">{t('transactionForm.noCard')}</option>
                   {cards.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
@@ -344,7 +348,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSuc
                   className="w-5 h-5 text-emerald-600 rounded focus:ring-emerald-500"
                 />
                 <label htmlFor="recurring-toggle" className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2 cursor-pointer select-none">
-                  <Repeat size={16} /> Recurring
+                  <Repeat size={16} /> {t('transactionForm.recurring')}
                 </label>
               </div>
               {isRecurring && (
@@ -353,12 +357,12 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSuc
                     {...register('recurrenceFrequency')}
                     className="w-full text-xs p-1.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
                   >
-                    <option value={RecurrenceFrequency.WEEKLY}>Weekly</option>
-                    <option value={RecurrenceFrequency.MONTHLY}>Monthly</option>
-                    <option value={RecurrenceFrequency.YEARLY}>Yearly</option>
+                    <option value={RecurrenceFrequency.WEEKLY}>{t('transactionForm.weekly')}</option>
+                    <option value={RecurrenceFrequency.MONTHLY}>{t('transactionForm.monthly')}</option>
+                    <option value={RecurrenceFrequency.YEARLY}>{t('transactionForm.yearly')}</option>
                   </select>
                   <div className="relative">
-                    <label className="text-[10px] text-slate-500 uppercase font-semibold mb-1 block">End Date (Optional)</label>
+                    <label className="text-[10px] text-slate-500 uppercase font-semibold mb-1 block">{t('transactionForm.endDateOptional')}</label>
                     <CalendarOff className="absolute left-2 top-[22px] text-slate-400" size={12} />
                     <input 
                       type="date"
@@ -381,7 +385,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSuc
                     className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500 disabled:opacity-50"
                   />
                   <label htmlFor="installment-toggle" className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2 cursor-pointer select-none">
-                   <Layers size={16} /> Installments
+                   <Layers size={16} /> {t('transactionForm.installments')}
                   </label>
                 </div>
                 
@@ -389,6 +393,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSuc
                     <div className="grid grid-cols-2 gap-2 animate-in fade-in slide-in-from-top-2 duration-300 mt-2">
                        <div>
                          <label className="block text-[10px] font-semibold text-slate-500 uppercase mb-1">Total</label>
+                         <label className="block text-[10px] font-semibold text-slate-500 uppercase mb-1">{t('transactionForm.total')}</label>
                          <select 
                             {...register('totalInstallments', { valueAsNumber: true })}
                             // Only disable if editing an EXISTING installment. If converting single->installment (editing but !initialData.isInstallment), allow it.
@@ -401,7 +406,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSuc
                           </select>
                        </div>
                        <div>
-                         <label className="block text-[10px] font-semibold text-slate-500 uppercase mb-1">Current #</label>
+                         <label className="block text-[10px] font-semibold text-slate-500 uppercase mb-1">{t('transactionForm.currentNumber')}</label>
                          <input
                             type="number"
                             {...register('installmentNumber', { valueAsNumber: true })}
@@ -418,7 +423,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSuc
 
           {/* Receipt Upload */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Receipt / Attachment</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('transactionForm.receipt')}</label>
             <div className="flex items-center gap-4">
                {receiptPreview ? (
                  <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 group">
@@ -433,7 +438,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSuc
                     <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
                  </label>
                )}
-               <span className="text-xs text-slate-500">Optional. Image only.</span>
+               <span className="text-xs text-slate-500">{t('transactionForm.receiptOptional')}</span>
             </div>
           </div>
 
@@ -444,10 +449,10 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSuc
               className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-2"
             >
               {isSubmitting ? (
-                <span>Processing...</span>
+                <span>{t('common.processing')}</span>
               ) : (
                 <>
-                  {isEditing ? 'Save Changes' : 'Create Transaction'}
+                  {isEditing ? t('transactionForm.saveChanges') : t('transactionForm.createTransaction')}
                 </>
               )}
             </button>

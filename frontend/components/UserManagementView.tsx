@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { UserProfile } from '../types';
 import { getUserProfile, updateUserProfile } from '../services/userService';
 import { User, Mail, Link as LinkIcon, Save, CheckCircle } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export const UserManagementView: React.FC = () => {
+  const { t } = useLanguage();
   const [profile, setProfile] = useState<UserProfile>({ name: '', email: '', avatarUrl: '' });
   const [success, setSuccess] = useState(false);
 
@@ -33,14 +35,14 @@ export const UserManagementView: React.FC = () => {
              )}
            </div>
            <div>
-             <h2 className="text-xl font-bold text-slate-900 dark:text-white">Profile Settings</h2>
-             <p className="text-sm text-slate-500">Manage your personal information</p>
+             <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t('user.title')}</h2>
+             <p className="text-sm text-slate-500">{t('user.subtitle')}</p>
            </div>
          </div>
 
          <form onSubmit={handleSave} className="space-y-6">
            <div>
-             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Full Name</label>
+             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('user.fullName')}</label>
              <div className="relative">
                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                <input 
@@ -53,13 +55,13 @@ export const UserManagementView: React.FC = () => {
            </div>
 
            <div>
-             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Email Address</label>
+             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('user.email')}</label>
              <div className="relative">
                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                <input 
                  type="email" 
                  value={profile.email}
-                 placeholder="Enter new email to change"
+                 placeholder={t('user.emailPlaceholder')}
                  onChange={e => setProfile({...profile, email: e.target.value})}
                  className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:text-white"
                />
@@ -67,14 +69,14 @@ export const UserManagementView: React.FC = () => {
            </div>
 
            <div>
-             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Avatar URL</label>
+             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('user.avatarUrl')}</label>
              <div className="relative">
                <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                <input 
                  type="text" 
                  value={profile.avatarUrl}
                  onChange={e => setProfile({...profile, avatarUrl: e.target.value})}
-                 placeholder="https://example.com/me.jpg"
+                 placeholder={t('user.avatarPlaceholder')}
                  className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:text-white"
                />
              </div>
@@ -85,14 +87,14 @@ export const UserManagementView: React.FC = () => {
                type="submit"
                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2 shadow-lg shadow-indigo-500/20 transition-all"
              >
-               <Save size={18} /> Save Changes
+               <Save size={18} /> {t('user.saveChanges')}
              </button>
            </div>
          </form>
 
          {success && (
            <div className="mt-4 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 p-3 rounded-lg flex items-center gap-2 text-sm">
-             <CheckCircle size={16} /> Profile updated successfully!
+             <CheckCircle size={16} /> {t('user.updated')}
            </div>
          )}
        </div>

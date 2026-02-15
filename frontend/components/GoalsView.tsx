@@ -3,8 +3,10 @@ import { Plus, Trash2, Edit2, Check, X, Target } from 'lucide-react';
 import { Goal } from '../types';
 import { fetchGoals, createGoal, updateGoal, deleteGoal } from '../services/goalService';
 import { toast } from 'sonner';
+import { useLanguage } from '../context/LanguageContext';
 
 export const GoalsView: React.FC = () => {
+  const { t, language } = useLanguage();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -22,7 +24,7 @@ export const GoalsView: React.FC = () => {
       const data = await fetchGoals();
       setGoals(data);
     } catch (error) {
-      toast.error('Failed to load goals');
+      toast.error(t('goals.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -51,13 +53,13 @@ export const GoalsView: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this goal?')) {
+    if (confirm(t('goals.confirmDelete'))) {
       try {
         await deleteGoal(id);
-        toast.success('Goal deleted');
+        toast.success(t('goals.deleted'));
         loadGoals();
       } catch (error) {
-        toast.error('Failed to delete goal');
+        toast.error(t('goals.deleteFailed'));
       }
     }
   };
@@ -74,34 +76,37 @@ export const GoalsView: React.FC = () => {
 
       if (editingGoal) {
         await updateGoal(editingGoal.id, payload);
-        toast.success('Goal updated');
+        toast.success(t('goals.updated'));
       } else {
         await createGoal(payload);
-        toast.success('Goal created');
+        toast.success(t('goals.created'));
       }
       resetForm();
       loadGoals();
     } catch (error) {
-      toast.error('Failed to save goal');
+      toast.error(t('goals.saveFailed'));
     }
   };
+
+  const formatMoney = (val: number) =>
+    new Intl.NumberFormat(language === 'en' ? 'en-US' : language, { style: 'currency', currency: 'BRL' }).format(val);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-          <Target className="text-indigo-600" /> Savings Goals
+          <Target className="text-indigo-600" /> {t('goals.title')}
         </h2>
         <button
           onClick={() => setShowModal(true)}
           className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
         >
-          <Plus size={20} /> New Goal
+          <Plus size={20} /> {t('goals.newGoal')}
         </button>
       </div>
 
       {loading ? (
-        <div className="text-center py-10 text-slate-500">Loading goals...</div>
+        <div className="text-center py-10 text-slate-500">{t('goals.loading')}</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {goals.map(goal => {
@@ -112,7 +117,7 @@ export const GoalsView: React.FC = () => {
                   <div>
                     <h3 className="font-semibold text-lg text-slate-900 dark:text-white">{goal.name}</h3>
                     {goal.deadline && (
-                      <p className="text-xs text-slate-500">Target: {new Date(goal.deadline).toLocaleDateString()}</p>
+                      <p className="text-xs text-slate-500">{t('goals.targetLabel')} {new Date(goal.deadline).toLocaleDateString(language === 'en' ? 'en-US' : language)}</p>
                     )}
                   </div>
                   <div className="flex gap-2">
@@ -127,10 +132,10 @@ export const GoalsView: React.FC = () => {
 
                 <div className="mb-2 flex justify-between text-sm">
                   <span className="text-slate-600 dark:text-slate-400">
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(goal.currentAmount)}
+                    {formatMoney(goal.currentAmount)}
                   </span>
                   <span className="font-medium text-slate-900 dark:text-white">
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(goal.targetAmount)}
+                    {formatMoney(goal.targetAmount)}
                   </span>
                 </div>
 
@@ -147,7 +152,7 @@ export const GoalsView: React.FC = () => {
 
           {goals.length === 0 && (
             <div className="col-span-full text-center py-10 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-300 dark:border-slate-700">
-              <p className="text-slate-500">No goals set yet. Start saving!</p>
+              <p className="text-slate-500">{t('goals.noGoals')}</p>
             </div>
           )}
         </div>
@@ -158,7 +163,7 @@ export const GoalsView: React.FC = () => {
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
               <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                {editingGoal ? 'Edit Goal' : 'New Savings Goal'}
+                {editingGoal ? t('goals.editGoal') : t('goals.newSavingsGoal')}
               </h3>
               <button onClick={resetForm} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
                 <X size={20} />
@@ -167,20 +172,20 @@ export const GoalsView: React.FC = () => {
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Goal Name</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('goals.goalName')}</label>
                 <input
                   type="text"
                   required
                   value={name}
                   onChange={e => setName(e.target.value)}
                   className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                  placeholder="e.g. New Car"
+                  placeholder={t('goals.goalNamePlaceholder')}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Target Amount</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('goals.targetAmount')}</label>
                   <input
                     type="number"
                     required
@@ -192,7 +197,7 @@ export const GoalsView: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Current Saved</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('goals.currentSaved')}</label>
                   <input
                     type="number"
                     min="0"
@@ -205,7 +210,7 @@ export const GoalsView: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Deadline (Optional)</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('goals.deadlineOptional')}</label>
                 <input
                   type="date"
                   value={deadline}
@@ -220,13 +225,13 @@ export const GoalsView: React.FC = () => {
                   onClick={resetForm}
                   className="flex-1 px-4 py-2.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg font-medium transition-colors"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="flex-1 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-all shadow-lg shadow-indigo-500/20"
                 >
-                  {editingGoal ? 'Update Goal' : 'Create Goal'}
+                  {editingGoal ? t('goals.updateGoal') : t('goals.createGoal')}
                 </button>
               </div>
             </form>
