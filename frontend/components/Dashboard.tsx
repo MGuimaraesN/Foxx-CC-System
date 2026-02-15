@@ -155,7 +155,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
             <div className="flex-1 w-full min-h-0 relative">
                 <div className="absolute inset-0">
                 <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={stats?.monthlyTrend} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <ComposedChart data={stats?.monthlyTrend}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" className="dark:stroke-slate-700" />
                     <XAxis
                         dataKey="month"
@@ -298,7 +298,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
                 </div>
                 <div className="flex-1 w-full relative">
                     <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={stats?.dailyTrend || []} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                        <AreaChart data={stats?.dailyTrend || []}>
                             <defs>
                                 <linearGradient id="colorCurrent" x1="0" y1="0" x2="0" y2="1">
                                     <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
@@ -339,7 +339,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, isLoading, currency
                                 type="category"
                                 axisLine={false}
                                 tickLine={false}
-                                width={80}
+                                width={100}
                                 tick={{ fill: '#64748b', fontSize: 12 }}
                             />
                             <Tooltip

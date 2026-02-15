@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchBudgets, createBudget, deleteBudget } from '../services/transactionService';
+import { fetchBudgets, createBudget, deleteBudget, updateBudget } from '../services/transactionService';
 import { BudgetUsage } from '../types';
 import { Skeleton } from './ui/Skeleton';
 import { Plus, Trash2, TrendingUp, AlertTriangle, CheckCircle, Edit2 } from 'lucide-react';
@@ -32,13 +32,10 @@ export const BudgetView: React.FC = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: any) => Promise.resolve(), // Mock for now or implement updateBudget if available
+    mutationFn: updateBudget,
     onSuccess: () => {
-       // Since updateBudget isn't in imported services yet, we assume it might be missing or need creating.
-       // However, the prompt says "No BudgetView.tsx... adicione botão de edição...".
-       // Ideally we need an updateBudget endpoint. For now I'll reset UI.
-       setIsAdding(false);
-       setEditingId(null);
+       queryClient.invalidateQueries({ queryKey: ['budgets'] });
+       resetForm();
     }
   });
 
@@ -67,11 +64,12 @@ export const BudgetView: React.FC = () => {
     e.preventDefault();
     if (category && amount) {
       if (editingId) {
-          // Mock update since we don't have the endpoint yet, or we'd call updateBudget(editingId, ...)
-          // For now, let's treat as create for simplicity or just reset
-          // Ideally: updateMutation.mutate(...)
-          console.log("Update logic placeholder");
-          resetForm();
+          updateMutation.mutate({
+            id: editingId,
+            category,
+            amount: Number(amount),
+            tag: tag || undefined
+          });
       } else {
           createMutation.mutate({ category, amount: Number(amount), tag: tag || undefined });
       }
