@@ -22,7 +22,7 @@ export const getBudgets = async (req: AuthRequest, res: Response) => {
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
     const startOfMonth = new Date(currentYear, currentMonth, 1);
-    const endOfMonth = new Date(currentYear, currentMonth + 1, 0);
+    const endOfMonth = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59, 999);
 
     const usage = await Promise.all(budgets.map(async (b) => {
         const whereClause: any = {
